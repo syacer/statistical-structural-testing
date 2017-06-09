@@ -1,0 +1,7 @@
+﻿1>------ Build started: Project: StatisticalApproach, Configuration: Debug Any CPU ------
+1>D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\TaskDistributor.cs(39,13,39,24): warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.
+1>D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\Form1.cs(107,30,107,32): warning CS0168: The variable 'ex' is declared but never used
+1>D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\StdGA.cs(106,20,106,34): warning CS0219: The variable 'testindividual' is assigned but its value is never used
+1>D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\AbsClasses.cs(298,25,298,26): warning CS0219: The variable 'a' is assigned but its value is never used
+1>  StatisticalApproach -> D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\bin\Debug\StatisticalApproach-GA-NewFlow.exe
+========== Build: 1 succeeded, 0 failed, 2 up-to-date, 0 skipped ==========

@@ -1,0 +1,176 @@
+﻿'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: DefaultDomain): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_32\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: DefaultDomain): Loaded 'D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\bin\Debug\StatisticalApproach-GA-NewFlow.exe'. Symbols loaded.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Windows.Forms\v4.0_4.0.0.0__b77a5c561934e089\System.Windows.Forms.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Drawing\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Drawing.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Windows.Forms.DataVisualization\v4.0_4.0.0.0__31bf3856ad364e35\System.Windows.Forms.DataVisualization.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Core\v4.0_4.0.0.0__b77a5c561934e089\System.Core.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\Accessibility\v4.0_4.0.0.0__b03f5f7f11d50a3a\Accessibility.dll'. Cannot find or open the PDB file.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_32\System.Data\v4.0_4.0.0.0__b77a5c561934e089\System.Data.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Numerics\v4.0_4.0.0.0__b77a5c561934e089\System.Numerics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Data.DataSetExtensions\v4.0_4.0.0.0__b77a5c561934e089\System.Data.DataSetExtensions.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'D:\Dropbox\ResearchProgramming\DeterministicApproach-GA\StatisticalApproach-GA-NewFlow\bin\Debug\MathNet.Numerics.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+Next GA
+'StatisticalApproach-GA-NewFlow.exe' (CLR v4.0.30319: StatisticalApproach-GA-NewFlow.exe): Loaded 'C:\WINDOWS\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.Serialization\v4.0_4.0.0.0__b77a5c561934e089\System.Runtime.Serialization.dll'. Skipped loading symbols. Module is optimized and the debugger option 'Just My Code' is enabled.
+0'th genotype fitness assement
+XXXXXXXXXXXXX
+1'th genotype fitness assement
+XXXXXXXXXXXXX
+2'th genotype fitness assement
+XXXXXXXXXXXXX
+3'th genotype fitness assement
+XXXXXXXXXXXXX
+4'th genotype fitness assement
+XXXXXXXXXXXXX
+5'th genotype fitness assement
+XXXXXXXXXXXXX
+6'th genotype fitness assement
+XXXXXXXXXXXXX
+7'th genotype fitness assement
+XXXXXXXXXXXXX
+8'th genotype fitness assement
+XXXXXXXXXXXXX
+9'th genotype fitness assement
+XXXXXXXXXXXXX
+10'th genotype fitness assement
+XXXXXXXXXXXXX
+11'th genotype fitness assement
+XXXXXXXXXXXXX
+12'th genotype fitness assement
+XXXXXXXXXXXXX
+13'th genotype fitness assement
+XXXXXXXXXXXXX
+14'th genotype fitness assement
+XXXXXXXXXXXXX
+15'th genotype fitness assement
+XXXXXXXXXXXXX
+16'th genotype fitness assement
+XXXXXXXXXXXXX
+17'th genotype fitness assement
+XXXXXXXXXXXXX
+18'th genotype fitness assement
+XXXXXXXXXXXXX
+19'th genotype fitness assement
+XXXXXXXXXXXXX
+20'th genotype fitness assement
+XXXXXXXXXXXXX
+21'th genotype fitness assement
+XXXXXXXXXXXXX
+22'th genotype fitness assement
+XXXXXXXXXXXXX
+23'th genotype fitness assement
+XXXXXXXXXXXXX
+24'th genotype fitness assement
+XXXXXXXXXXXXX
+25'th genotype fitness assement
+XXXXXXXXXXXXX
+26'th genotype fitness assement
+XXXXXXXXXXXXX
+27'th genotype fitness assement
+XXXXXXXXXXXXX
+28'th genotype fitness assement
+XXXXXXXXXXXXX
+29'th genotype fitness assement
+XXXXXXXXXXXXX
+30'th genotype fitness assement
+XXXXXXXXXXXXX
+31'th genotype fitness assement
+XXXXXXXXXXXXX
+32'th genotype fitness assement
+XXXXXXXXXXXXX
+33'th genotype fitness assement
+XXXXXXXXXXXXX
+34'th genotype fitness assement
+XXXXXXXXXXXXX
+35'th genotype fitness assement
+XXXXXXXXXXXXX
+36'th genotype fitness assement
+XXXXXXXXXXXXX
+37'th genotype fitness assement
+XXXXXXXXXXXXX
+38'th genotype fitness assement
+XXXXXXXXXXXXX
+39'th genotype fitness assement
+XXXXXXXXXXXXX
+40'th genotype fitness assement
+XXXXXXXXXXXXX
+41'th genotype fitness assement
+XXXXXXXXXXXXX
+42'th genotype fitness assement
+XXXXXXXXXXXXX
+43'th genotype fitness assement
+XXXXXXXXXXXXX
+44'th genotype fitness assement
+XXXXXXXXXXXXX
+45'th genotype fitness assement
+XXXXXXXXXXXXX
+46'th genotype fitness assement
+XXXXXXXXXXXXX
+47'th genotype fitness assement
+XXXXXXXXXXXXX
+48'th genotype fitness assement
+XXXXXXXXXXXXX
+49'th genotype fitness assement
+XXXXXXXXXXXXX
+50'th genotype fitness assement
+XXXXXXXXXXXXX
+51'th genotype fitness assement
+XXXXXXXXXXXXX
+52'th genotype fitness assement
+XXXXXXXXXXXXX
+53'th genotype fitness assement
+XXXXXXXXXXXXX
+54'th genotype fitness assement
+XXXXXXXXXXXXX
+55'th genotype fitness assement
+XXXXXXXXXXXXX
+56'th genotype fitness assement
+XXXXXXXXXXXXX
+57'th genotype fitness assement
+XXXXXXXXXXXXX
+58'th genotype fitness assement
+XXXXXXXXXXXXX
+59'th genotype fitness assement
+XXXXXXXXXXXXX
+60'th genotype fitness assement
+XXXXXXXXXXXXX
+61'th genotype fitness assement
+XXXXXXXXXXXXX
+62'th genotype fitness assement
+XXXXXXXXXXXXX
+63'th genotype fitness assement
+XXXXXXXXXXXXX
+64'th genotype fitness assement
+XXXXXXXXXXXXX
+65'th genotype fitness assement
+XXXXXXXXXXXXX
+66'th genotype fitness assement
+XXXXXXXXXXXXX
+67'th genotype fitness assement
+XXXXXXXXXXXXX
+68'th genotype fitness assement
+XXXXXXXXXXXXX
+69'th genotype fitness assement
+XXXXXXXXXXXXX
+70'th genotype fitness assement
+XXXXXXXXXXXXX
+71'th genotype fitness assement
+XXXXXXXXXXXXX
+72'th genotype fitness assement
+XXXXXXXXXXXXX
+73'th genotype fitness assement
+XXXXXXXXXXXXX
+74'th genotype fitness assement
+XXXXXXXXXXXXX
+75'th genotype fitness assement
+XXXXXXXXXXXXX
+76'th genotype fitness assement
+XXXXXXXXXXXXX
+77'th genotype fitness assement
+XXXXXXXXXXXXX
+78'th genotype fitness assement
+XXXXXXXXXXXXX
+79'th genotype fitness assement
+The program '[5044] StatisticalApproach-GA-NewFlow.exe' has exited with code -1 (0xffffffff).
