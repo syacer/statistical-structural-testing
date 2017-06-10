@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using StatisticalApproach.Framework;
 
+#if false
 namespace StatisticalApproach.CACO
 {
     using MathNet.Numerics.LinearAlgebra;
@@ -537,3 +538,4 @@ namespace StatisticalApproach.CACO
         }
     }
 }
+#endif

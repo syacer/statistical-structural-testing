@@ -34,7 +34,7 @@ namespace StatisticalApproach
             {
                 chart1.Series.Add("fitness/gen_" + i.ToString());
                 chart1.Series[i].ChartType = System.Windows.Forms.DataVisualization
-                    .Charting.SeriesChartType.Line;
+                    .Charting.SeriesChartType.Point;
                 chart1.Series[i].Color = Color.FromArgb(
                     rnd.Next(1, 255),
                     rnd.Next(1, 255),
@@ -58,8 +58,10 @@ namespace StatisticalApproach
                 if (record.updateDisplay[i] == true)
                 {
                     // Calculate Avg Fitness
-                    double avgFitness = record.currentFitnessList[i].Sum(x => x)*1.0/ (record.currentFitnessList[i].Count); // -1 only for triangle
-                    chart1.Series[i].Points.AddXY(Convert.ToInt16(record.currentGen[i][0]), avgFitness);
+                    for (int j = 0; j < record.currentFitnessList[i].Count; j++)
+                    {
+                        chart1.Series[i].Points.AddXY(record.currentFitnessList[i][j].Item1, record.currentFitnessList[i][j].Item2);
+                    }
                     //lForm2[i].Show();
                     //lForm2[i].UpdateChart1Form2();
                     record.updateDisplay[i] = false;

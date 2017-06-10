@@ -33,13 +33,21 @@ namespace StatisticalApproach.Framework
                           if (_record.updateIndicate[i] == true)
                           {
                               /** update fitRecord to File **/
-                              lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\GA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentGen[i]);
-                              lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\GA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentCElist[i]);
+                              lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\MOGA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentGen[i]);
+                              lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\MOGA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentCElist[i]);
+
+                              List<string> tmpStr = new List<string>();
+                              for (int j = 0; j < _record.currentFitnessList[i].Count; j++)
+                              {
+                                  tmpStr.Add(_record.currentFitnessList[i][j].Item1 + " " + _record.currentFitnessList[i][j].Item2);    
+                              }
+                              lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\MOGA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), tmpStr);
+
                               for (int k = 0; k < _record.currentBestSolution[i].Length; k++)
                               {
                                   if (_record.currentBestSolution[i][k] != null)
                                   {
-                                      lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\GA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentBestSolution[i][k]);
+                                      lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\MOGA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), _record.currentBestSolution[i][k]);
                                   }
                               }
                               _record.updateDisplay[i] = true;
@@ -51,11 +59,10 @@ namespace StatisticalApproach.Framework
                   for (int i = 0; i < _enVars.Length; i++)
                   {
                       string timeElaspe = @"Total Time: " + Math.Round(_record.Watch[i].ElapsedMilliseconds*1.0/(1000*60),3).ToString();
-                      lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\GA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), new List<string>() {timeElaspe});
+                      lfa.StoreListToLinesAppend(Directory.GetCurrentDirectory() + @"\OUT\MOGA\" + _enVars[i].pmProblem["Name"] + @"\CEOutput_" + i.ToString(), new List<string>() {timeElaspe});
                   }
 
               });
-
             await monitor;
             Console.WriteLine("Mointor Closed.");
             return 0;

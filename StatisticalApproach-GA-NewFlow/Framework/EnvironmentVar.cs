@@ -20,7 +20,7 @@ namespace StatisticalApproach.Framework
         /**GeneralFitnessFitnessSetting**/
         public double[] AryWeights = new double[2] { 1, 0 }; // [1]: weights on esitmate average, weights on estiamte div
         public int evaToken = 0;   // 0 as using esitmate fitness in GA, 1 as using true fitness in GA.
-        public int testSetSize = 10000;
+        public int testSetSize = 2000;
         //** EndOfGeneralFitness**/
 
         /** SUT Related Info Import **/

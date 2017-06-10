@@ -13,7 +13,7 @@ namespace StatisticalApproach.Framework
         public List<string>[] currentGen;
         public List<string>[] currentCElist;
         public List<string>[][] currentBestSolution;
-        public List<double>[] currentFitnessList;
+        public List<Tuple<double, int>>[] currentFitnessList;
         public bool[] updateIndicate;
         public bool[] updateDisplay;
         public Stopwatch[] Watch;
@@ -34,7 +34,7 @@ namespace StatisticalApproach.Framework
                 currentGen = new List<string>[numOfRuns];
                 currentCElist = new List<string>[numOfRuns];
                 currentBestSolution = new List<string>[numOfRuns][];
-                currentFitnessList = new List<double>[numOfRuns];
+                currentFitnessList = new List<Tuple<double,int>>[numOfRuns];
 
                 Watch[i] = new Stopwatch();
             }

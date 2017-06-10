@@ -60,6 +60,14 @@ namespace StatisticalApproach.Utility
         {
             try
             {
+                if (list == null)
+                {
+                    return -1;
+                }
+                if (list.Count == 0)
+                {
+                    return -1;
+                }
                 using (System.IO.StreamWriter newTask = File.AppendText(filePath))
                 {
                     foreach (string str in list)

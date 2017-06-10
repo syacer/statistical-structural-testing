@@ -19,15 +19,15 @@ namespace StatisticalApproach.MOGA
         private Record _record;
         private int _runIndex = 0;
         private int gen = 0;
-        int popSize = 50;
+        int popSize = 200;
         public int dimension = 0;
         public CEPool cePool = null;
         public CEPool tempPool = null;
         public int maxGen = 20000;
         public double pmCrossOverRate = 0.8;
-        public double pmMutationRate = 0.1;
-        int pNumOfParams = 30;
-        int pPanCombSize = 5;
+        public double pmMutationRate = 0.2;
+        int pNumOfParams = 10;
+        int pPanCombSize = 20;
 
         public CustMOGA(Record record, int runIndex, AppFunc next)
         {
@@ -150,6 +150,38 @@ namespace StatisticalApproach.MOGA
             return new List<string>() { theta, weight };
         }
 
+        void UpdateRecordAndDisplay()
+        {
+            List<string> generation = new List<string>() { gen.ToString() };
+            List<string> currentCElist = new List<string>();
+            List<string> currentBestSolution = new List<string>();
+            List<double> currentFitnessList = new List<double>();
+            List<Tuple<double, int>>fitness = new List<Tuple<double, int>>();
+
+            Console.WriteLine("Generation: {0}", gen);
+            List<GAEncoding> currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
+            // Update Records
+            generation = new List<string>() { gen.ToString() };
+            currentCElist = new List<string>();
+            currentBestSolution = new List<string>();
+            currentFitnessList = new List<double>();
+            Console.WriteLine("Generation: {0}", gen);
+            currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
+
+            for (int i = 0; i < currentBests.Count; i++)
+            {
+                fitness.Add(new Tuple<double,int>(currentBests[i].entropy, currentBests[i].duplicateSamples));
+                Console.WriteLine("Solution: {1}, Paths Found: {0}", currentBests[i].pathRecord.Count, i);
+                Console.WriteLine("Solution: {1}, Entropy: {0}", currentBests[i].entropy, i);
+                Console.WriteLine("Solution: {1}, Duplicates: {0}", currentBests[i].duplicateSamples, i);
+            }
+
+            _record.currentBestSolution[_runIndex][0] = Print_Solution(currentBests[0]);
+            _record.currentGen[_runIndex] = generation;
+            _record.currentFitnessList[_runIndex] = fitness;
+            _record.updateIndicate[_runIndex] = true;
+            while (_record.updateIndicate[_runIndex] == true);
+        }
         public void MOGA_Start()
         {
             LocalFileAccess lfa = new LocalFileAccess();
@@ -162,59 +194,7 @@ namespace StatisticalApproach.MOGA
             token[0] = 0;
             MOGA_NormalizeFitness();
             PopulationGen(); //tmpPool -> cePool
-
-
-            // Update Records
-            List<string> generation = new List<string>() { gen.ToString() };
-            List<string> currentCElist = new List<string>();
-            List<string> currentBestSolution = new List<string>();
-            List<double> currentFitnessList = new List<double>();
-            Console.WriteLine("Generation: {0}", gen);
-            List<GAEncoding> currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
-            currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
-            var currentBest = currentBests[0];
-            double[] ceCurrentScores = currentBest.fitnessPerCE.ToArray();
-            for (int i = 0; i < currentBests.Count; i++)
-            {
-                Console.WriteLine("Solution: {1}, Paths Found: {0}", currentBests[i].pathRecord.Count, i);
-                Console.WriteLine("Solution: {1}, Entropy: {0}", currentBests[i].entropy, i);
-                Console.WriteLine("Solution: {1}, Duplicates: {0}", currentBests[i].duplicateSamples, i);
-
-            }
-
-
-            //// Display Path Information
-            //double pathEva = 0;
-            //for (int i = 0; i < currentBest.pathRecord.Count; i++)
-            //{
-            //    pathEva = Math.Pow((currentBest.pathRecord.Values.ToArray()[i]
-            //        - (1.0 / currentBest.pathRecord.Count)), 2) + pathEva;
-            //}
-            //pathEva = 27 + Math.Sqrt(pathEva) / currentBest.pathRecord.Count - currentBest.pathRecord.Count;
-            //for (int i = 0; i < ceCurrentScores.Length; i++)
-            //{
-            //    string dataOut = "CE: " + i.ToString() + ", " + "Fit: " + ceCurrentScores[i].ToString();
-            //    currentCElist.Add(dataOut);
-            //    //currentFitnessList.Add(ceCurrentScores[i]);
-            //    //currentFitnessList.Add((cePool[currentBest])[0]);
-            //    currentFitnessList.Add(pathEva);
-            //    Console.WriteLine(dataOut);
-            //}
-
-
-            //Console.WriteLine("Paths Found: {0}", currentBest.pathRecord.Count);
-            //Console.WriteLine("Path Eva: {0}",pathEva);
-
-            //Console.WriteLine("Entropy: {0}", cePool[currentBest][0]);
-            //Console.WriteLine("Duplicates: {0}", currentBest.duplicateSamples);
-            //Console.WriteLine("TestSet: {0}", currentBest.strTestSet);
-            // Output CurrentBest Result;
-            _record.currentBestSolution[_runIndex][0] = Print_Solution(currentBest);
-            _record.currentGen[_runIndex] = generation;
-            _record.currentCElist[_runIndex] = currentCElist;
-            _record.currentFitnessList[_runIndex] = currentFitnessList;
-            _record.updateIndicate[_runIndex] = true;
-            while (_record.updateIndicate[_runIndex] == true) ;
+            UpdateRecordAndDisplay();
 
             // Start MOGA
             while (gen < maxGen)
@@ -226,43 +206,7 @@ namespace StatisticalApproach.MOGA
                 token[0] = 0;
                 MOGA_NormalizeFitness();
                 PopulationGen();
-
-                // Update Records
-                generation = new List<string>() { gen.ToString() };
-                currentCElist = new List<string>();
-                currentBestSolution = new List<string>();
-                currentFitnessList = new List<double>();
-                Console.WriteLine("Generation: {0}", gen);
-                currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
-                for (int i = 0; i < currentBests.Count; i++)
-                {
-                    Console.WriteLine("Solution: {1}, Paths Found: {0}", currentBests[i].pathRecord.Count, i);
-                    Console.WriteLine("Solution: {1}, Entropy: {0}", currentBests[i].entropy, i);
-                    Console.WriteLine("Solution: {1}, Duplicates: {0}", currentBests[i].duplicateSamples, i);
-                    
-                }
-
-                //for (int i = 0; i < ceCurrentScores.Length; i++)
-                //{
-                //    string dataOut = "CE: " + i.ToString() + ", " + "Fit: " + ceCurrentScores[i].ToString();
-                //    currentCElist.Add(dataOut);
-                //    //currentFitnessList.Add(ceCurrentScores[i]);
-                //    //currentFitnessList.Add((cePool[currentBest])[0]);
-                //    currentFitnessList.Add(pathEva);
-                //    Console.WriteLine(dataOut);
-                //}
-
-                //Console.WriteLine("Path Eva: {0}", pathEva);
-                //Console.WriteLine("Entropy: {0}", cePool[currentBest][0]);
-                //Console.WriteLine("Duplicates: {0}", currentBest.duplicateSamples);
-                //Console.WriteLine("TestSet: {0}", currentBest.strTestSet);
-                //// Output CurrentBest Result;
-                _record.currentBestSolution[_runIndex][0] = Print_Solution(currentBest);
-                _record.currentGen[_runIndex] = generation;
-                _record.currentCElist[_runIndex] = currentCElist;
-                _record.currentFitnessList[_runIndex] = currentFitnessList;
-                _record.updateIndicate[_runIndex] = true;
-                while (_record.updateIndicate[_runIndex] == true) ;
+                UpdateRecordAndDisplay();
             }
             _record.Watch[_runIndex].Stop();
             enVar.finishIndicate = true;

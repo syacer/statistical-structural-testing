@@ -75,9 +75,9 @@
             this.chart1.Name = "chart1";
             this.chart1.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.Excel;
             series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
             series2.Legend = "Legend1";
-            series2.Name = "fitness/Generation";
+            series2.Name = "entropy/duplicates";
             series2.XValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Int32;
             series2.YValueType = System.Windows.Forms.DataVisualization.Charting.ChartValueType.Double;
             this.chart1.Series.Add(series2);

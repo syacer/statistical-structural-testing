@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
+#if false
 namespace StatisticalApproach.CACO
 {
     [Serializable]
@@ -239,3 +239,4 @@ namespace StatisticalApproach.CACO
         }
     }
 }
+#endif
