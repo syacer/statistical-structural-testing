@@ -32,7 +32,7 @@ namespace StatisticalApproach
             Random rnd = new Random();
             for (int i = 0; i < numOfRuns; i++)
             {
-                chart1.Series.Add("fitness/gen_" + i.ToString());
+                chart1.Series.Add("Fitness_" + i.ToString());
                 chart1.Series[i].ChartType = System.Windows.Forms.DataVisualization
                     .Charting.SeriesChartType.Point;
                 chart1.Series[i].Color = Color.FromArgb(
@@ -57,6 +57,12 @@ namespace StatisticalApproach
             {
                 if (record.updateDisplay[i] == true)
                 {
+     
+                    if (Convert.ToInt16(record.currentGen[i][0]) % 100 != 0)
+                    {
+                        record.updateDisplay[i] = false;
+                        continue;
+                    }
                     // Calculate Avg Fitness
                     for (int j = 0; j < record.currentFitnessList[i].Count; j++)
                     {
