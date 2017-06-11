@@ -312,31 +312,45 @@ namespace StatisticalApproach.MOGA
                 }
             );
             Vector<double> tmp = (high - low).Add(1).Divide(_numOfParams);
-
-            Vector<double> tmpW = Vector.Build.Dense(
-                _dimension,
-                (k) =>
-                {
-                    return 0;
-                }
-            );
-
             for (int i = 0; i < _numOfParams; i++)
             {
                 thetaDelta.SetRow(i, tmp);
             }
 
-            for (int i = 0; i < _numOfParams; i++)
-            {
-                Vector<double> newWeight = Vector.Build.Dense(_dimension, (k) =>
-                {
-                    return enVar.rnd.Next(0, _numOfParams + 1 - (int)tmpW[k]);
-                });
-                tmpW = newWeight + tmpW;
-                weights.SetRow(i, newWeight.ToArray());
-            }
-            weights.SetRow(_numOfParams, tmpW.SubtractFrom(_numOfParams + 1).ToArray());
+            int numOfOne = Convert.ToInt16(Math.Ceiling((_numOfParams + 1) * 0.2));
+            int numOfNotOne = (_numOfParams - numOfOne) / 2;
 
+            for (int i = 0; i < _numOfParams+1; i++)
+            {
+                weights = Matrix.Build.Dense(_numOfParams+1,_dimension,1);
+            }
+
+            int[] cnt = new int[_dimension];
+            double[] values = new double[2] { 1.5, 0.5 };
+
+            for (int j = 0; j < 2; j++)
+            {
+                Array.Clear(cnt,0,cnt.Length);
+                while (cnt.Any(c => c < numOfNotOne))
+                {
+                    Vector<double> newIndexes = Vector.Build.Dense(_dimension, (k) =>
+                    {
+                        return enVar.rnd.Next(0, _numOfParams + 1);
+                    });
+                    for (int i = 0; i < _dimension; i++)
+                    {
+                        if (cnt[i] == numOfNotOne)
+                        {
+                            continue;
+                        }
+                        else if (weights[(int)newIndexes[i], i] == 1)
+                        {
+                            weights[(int)newIndexes[i], i] = values[j];
+                            cnt[i] += 1;
+                        }
+                    }
+                }
+            }
         }
     }
 }
