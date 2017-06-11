@@ -9,6 +9,8 @@ using Accord.Statistics.Distributions.Multivariate;
 
 namespace StatisticalApproach.MOGA
 {
+    using StatisticalApproach.Utility;
+
     using CEPool = Dictionary<GAEncoding, double[]>;
 
     [Serializable]
@@ -30,7 +32,7 @@ namespace StatisticalApproach.MOGA
         public string strTestSet;
         int _numOfParams;
         int _dimension;
-        double pMutCoe = 0.3;
+        int permuationSize = 10;
         EnvironmentVar _enVar;
 
         public GAEncoding(int numOfParams, int dimension, EnvironmentVar enVar)
@@ -48,64 +50,41 @@ namespace StatisticalApproach.MOGA
         {
             // Select solution to combine
             // Find Average
-            Matrix<double> avgThetaDelta = Matrix.Build.Dense(_numOfParams,_dimension);
             Matrix<double> avgWeight = Matrix.Build.Dense(_numOfParams + 1, _dimension);
 
             for (int i = 0; i < selectedList.Length; i++)
             {
-                avgThetaDelta += currentPool.ElementAt(i).Key.thetaDelta;
                 avgWeight += currentPool.ElementAt(i).Key.weights;
             }
-            avgThetaDelta = avgThetaDelta / selectedList.Length;
             avgWeight = avgWeight / selectedList.Length;
             // ... Check the sum of each row should be equal to a constant max
             GAEncoding newSolution = new GAEncoding(_numOfParams,_dimension,_enVar);
-            newSolution.thetaDelta = avgThetaDelta;
             newSolution.weights = avgWeight;
 
             return newSolution;
         }
 
         //Simple Mutation Assumes independence of each variable
-        internal void RealVectSimpleMutation()
+        internal void PermutationMutation()
         {
-            // Random select a index
-            int index = _enVar.rnd.Next(0,_numOfParams-1);
-            double[] mean = thetaDelta.Row(index).ToArray();
-            double[,] cov = new double[_dimension,_dimension];
-            for (int i = 0; i < _dimension; i++)
+            //Shift N weight vector
+            Queue<Vector<double>> weightVector = new Queue<Vector<double>>();
+            // grab last N weight vector, insert into Queue
+            for (int i = 0; i < permuationSize; i++)
             {
-                double delta = (((List<Tuple<int, int>>)_enVar
-                    .pmProblem["Bound"])[i].Item2
-                - ((List<Tuple<int, int>>)_enVar
-                .pmProblem["Bound"])[i].Item1)* pMutCoe;
-                cov[i,i] = delta;
+                weightVector.Enqueue(Copy.DeepCopy(weights.Row(_numOfParams-i)));
             }
-
-              double[] sample = MultivariateNormalDistribution
-                .Generate(1,mean,cov).First(); 
-            
-            // Regulation : 1: mirroring
-            for (int i = 0; i < sample.Count(); i++)
+            for (int i = 0; i < _numOfParams + 1-permuationSize; i++)
             {
-                if (sample[i] < 0)
-                {
-                    sample[i] = 2 * mean[i] - sample[i];
-                }
+                var weightVect = weights.Row(_numOfParams - i - permuationSize);
+                weights.SetRow(_numOfParams - i, weightVect.ToArray());
             }
-            // Regulation : 2: Normalize
-            thetaDelta.SetRow(index,sample);
-            thetaDelta = thetaDelta.NormalizeColumns(1);
-            for (int i = 0; i < _dimension; i++)
+            for (int i = 0; i < weightVector.Count; i++)
             {
-                double domain = (((List<Tuple<int, int>>)_enVar
-                    .pmProblem["Bound"])[i].Item2
-                - ((List<Tuple<int, int>>)_enVar
-                .pmProblem["Bound"])[i].Item1)+1;
-                var tmpVector = thetaDelta.Column(i).Multiply(domain);
-                thetaDelta.SetColumn(i,tmpVector);
+                weights.SetRow(permuationSize-i, weightVector.Dequeue());
             }
         }
+
         internal Vector<double> GetRandVect(EnvironmentVar enVar)
         {
             int[] selIndexArry = new int[_dimension];
@@ -316,5 +295,48 @@ namespace StatisticalApproach.MOGA
             weights.SetRow(_numOfParams, tmpW.SubtractFrom(_numOfParams + 1).ToArray());
         }
 
+        internal void FixInputs(EnvironmentVar enVar)
+        {
+            Vector<double> low = Vector.Build.Dense(
+                _dimension,
+                (k) =>
+                {
+                    return ((List<Tuple<int, int>>)enVar.pmProblem["Bound"])[k].Item1;
+                }
+            );
+            Vector<double> high = Vector.Build.Dense(
+                _dimension,
+                (k) =>
+                {
+                    return ((List<Tuple<int, int>>)enVar.pmProblem["Bound"])[k].Item2;
+                }
+            );
+            Vector<double> tmp = (high - low).Add(1).Divide(_numOfParams);
+
+            Vector<double> tmpW = Vector.Build.Dense(
+                _dimension,
+                (k) =>
+                {
+                    return 0;
+                }
+            );
+
+            for (int i = 0; i < _numOfParams; i++)
+            {
+                thetaDelta.SetRow(i, tmp);
+            }
+
+            for (int i = 0; i < _numOfParams; i++)
+            {
+                Vector<double> newWeight = Vector.Build.Dense(_dimension, (k) =>
+                {
+                    return enVar.rnd.Next(0, _numOfParams + 1 - (int)tmpW[k]);
+                });
+                tmpW = newWeight + tmpW;
+                weights.SetRow(i, newWeight.ToArray());
+            }
+            weights.SetRow(_numOfParams, tmpW.SubtractFrom(_numOfParams + 1).ToArray());
+
+        }
     }
 }

@@ -330,7 +330,7 @@ namespace StatisticalApproach.MOGA
             for (int i = 0; i < popSize; i++)
             {
                 var newSolution = new GAEncoding(pNumOfParams, dimension, enVar);
-                newSolution.Randomize(enVar);
+                newSolution.FixInputs(enVar);
                 tempPool.Add(newSolution,new double[] { -1, -1 });
             }
         }
@@ -355,7 +355,7 @@ namespace StatisticalApproach.MOGA
 
                 if (enVar.rnd.NextDouble() <= pmMutationRate)
                 {
-                    child.RealVectSimpleMutation();
+                    child.PermutationMutation();
                 }
                 if (child != null)
                 {
