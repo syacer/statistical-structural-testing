@@ -19,15 +19,16 @@ namespace StatisticalApproach.MOGA
         private Record _record;
         private int _runIndex = 0;
         private int gen = 0;
-        int popSize = 200;
+        int popSize = 100;
         public int dimension = 0;
         public CEPool cePool = null;
         public CEPool tempPool = null;
         public int maxGen = 20000;
         public double pmCrossOverRate = 0.8;
-        public double pmMutationRate = 0.2;
-        int pNumOfParams = 10;
+        public double pmMutationRate = 0.3;
+        int pNumOfParams = 100;
         int pPanCombSize = 20;
+        int permuationSize = 30;
 
         public CustMOGA(Record record, int runIndex, AppFunc next)
         {
@@ -299,7 +300,7 @@ namespace StatisticalApproach.MOGA
 
                 if (enVar.rnd.NextDouble() <= pmMutationRate)
                 {
-                    child.PermutationMutation();
+                    child.PermutationMutation(permuationSize);
                 }
                 if (child != null)
                 {

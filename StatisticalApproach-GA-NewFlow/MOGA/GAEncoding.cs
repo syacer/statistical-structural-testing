@@ -32,7 +32,6 @@ namespace StatisticalApproach.MOGA
         public string strTestSet;
         int _numOfParams;
         int _dimension;
-        int permuationSize = 10;
         EnvironmentVar _enVar;
 
         public GAEncoding(int numOfParams, int dimension, EnvironmentVar enVar)
@@ -44,6 +43,7 @@ namespace StatisticalApproach.MOGA
             weights = Matrix.Build.Dense(numOfParams + 1, dimension);
             pathRecord = new Dictionary<string, double>();
         }
+
         // Recombination: create a new solution, call this function;
         // Add the new solution to the population
         internal GAEncoding PanmicticRecomb(CEPool currentPool, int[] selectedList)
@@ -65,7 +65,7 @@ namespace StatisticalApproach.MOGA
         }
 
         //Simple Mutation Assumes independence of each variable
-        internal void PermutationMutation()
+        internal void PermutationMutation(int permuationSize)
         {
             //Shift N weight vector
             Queue<Vector<double>> weightVector = new Queue<Vector<double>>();
@@ -73,15 +73,17 @@ namespace StatisticalApproach.MOGA
             for (int i = 0; i < permuationSize; i++)
             {
                 weightVector.Enqueue(Copy.DeepCopy(weights.Row(_numOfParams-i)));
-            }
+            } 
             for (int i = 0; i < _numOfParams + 1-permuationSize; i++)
             {
-                var weightVect = weights.Row(_numOfParams - i - permuationSize);
+                var weightVect = Copy.DeepCopy(weights.Row(_numOfParams - i - permuationSize));
                 weights.SetRow(_numOfParams - i, weightVect.ToArray());
             }
-            for (int i = 0; i < weightVector.Count; i++)
+            int j = 0;
+            while (weightVector.Count != 0)
             {
-                weights.SetRow(permuationSize-i, weightVector.Dequeue());
+                weights.SetRow(permuationSize-j-1, weightVector.Dequeue());
+                j = j + 1;
             }
         }
 
