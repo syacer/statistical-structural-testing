@@ -25,9 +25,9 @@ namespace StatisticalApproach.MOGA
         public CEPool tempPool = null;
         public int maxGen = 20000;
         public double pmCrossOverRate = 0.8;
-        public double pmMutationRate = 0.3;
+        public double pmMutationRate = 0.2;
         int pNumOfParams = 100;
-        int pPanCombSize = 20;
+        int pPanCombSize = 5;
         int permuationSize = 30;
 
         public CustMOGA(Record record, int runIndex, AppFunc next)
@@ -236,7 +236,7 @@ namespace StatisticalApproach.MOGA
                             continue;
                         }
                         if (tempPool.ElementAt(i).Key.entropy <= tempPool.ElementAt(j).Key.entropy
-                            && tempPool.ElementAt(i).Key.duplicateSamples >
+                            && tempPool.ElementAt(i).Key.duplicateSamples >=
                             tempPool.ElementAt(j).Key.duplicateSamples)
                         {
                             dominatedList[i] += 1;
@@ -282,9 +282,10 @@ namespace StatisticalApproach.MOGA
 
         public void Reproduction()
         {
-            GAEncoding child = new GAEncoding(pNumOfParams, dimension,enVar);
+            GAEncoding child;
             int i = 0;
             var rankOneSols = cePool.Where(x => x.Key.rank == 1).ToList();
+            rankOneSols = rankOneSols.Where(x => x.Key.entropy == rankOneSols.Max(y => y.Key.entropy)).ToList();
             foreach (var s in rankOneSols)
             {
                 tempPool.Add(Copy.DeepCopy(s.Key),s.Value);

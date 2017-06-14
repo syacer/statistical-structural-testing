@@ -54,16 +54,16 @@ namespace StatisticalApproach.MOGA
 
             for (int i = 0; i < selectedList.Length; i++)
             {
-                avgWeight += currentPool.ElementAt(i).Key.weights;
+                avgWeight += currentPool.ElementAt(selectedList[i]).Key.weights;
             }
             avgWeight = avgWeight / selectedList.Length;
             // ... Check the sum of each row should be equal to a constant max
             GAEncoding newSolution = new GAEncoding(_numOfParams,_dimension,_enVar);
+            newSolution.FixInputs(_enVar);
             newSolution.weights = avgWeight;
 
             return newSolution;
         }
-
         //Simple Mutation Assumes independence of each variable
         internal void PermutationMutation(int permuationSize)
         {
@@ -103,7 +103,7 @@ namespace StatisticalApproach.MOGA
             for (int i = 0; i < _dimension; i++)
             {
                 double lowIndex = 0.0;
-                double sumOfWeight = _numOfParams + 1;
+                double sumOfWeight = weights.ColumnSums()[i];
                 double rndNum = enVar.rnd.NextDouble() * sumOfWeight;
                 for (int j = 0; j < _numOfParams; j++)
                 {
@@ -255,6 +255,7 @@ namespace StatisticalApproach.MOGA
             var fit2Of2 = fit1Of2.Multiply(mEye).Diagonal();
             entropy = fit2Of2.Sum();
             fitnessPerCE = fitnessPerCE.Divide(_enVar.testSetSize);
+            duplicateSamples = 1; //For Testing Only...
         }
 
         internal void Randomize(EnvironmentVar enVar)
@@ -328,29 +329,14 @@ namespace StatisticalApproach.MOGA
             }
 
             int[] cnt = new int[_dimension];
-            double[] values = new double[2] { 1.5, 0.5 };
+            double[] values = new double[2] { 0, 2 };
 
-            for (int j = 0; j < 2; j++)
+            // Initialize Weights
+            for (int i = 0; i < _dimension; i++)
             {
-                Array.Clear(cnt,0,cnt.Length);
-                while (cnt.Any(c => c < numOfNotOne))
+                for (int j = 0; j < _numOfParams + 1; j++)
                 {
-                    Vector<double> newIndexes = Vector.Build.Dense(_dimension, (k) =>
-                    {
-                        return enVar.rnd.Next(0, _numOfParams + 1);
-                    });
-                    for (int i = 0; i < _dimension; i++)
-                    {
-                        if (cnt[i] == numOfNotOne)
-                        {
-                            continue;
-                        }
-                        else if (weights[(int)newIndexes[i], i] == 1)
-                        {
-                            weights[(int)newIndexes[i], i] = values[j];
-                            cnt[i] += 1;
-                        }
-                    }
+                    weights[j, i] = enVar.rnd.NextDouble();
                 }
             }
         }

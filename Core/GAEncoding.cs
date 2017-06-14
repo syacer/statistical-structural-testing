@@ -17,6 +17,7 @@ namespace Core
         //parm2 |p4,    p5,    p6 |
         //parm3 |p7,    p8,    p9 |
         //........................
+        // Each weight ranges within [0,1]
 
         public Matrix<double> thetaDelta;
         Vector<double> numOfLabelsVect;
@@ -26,18 +27,22 @@ namespace Core
         public double entropy;
         int _numOfParams;
         int _dimension;
+        double[] _lowbounds;
+        double[] _highbounds;
 
-        public GAEncoding(int numOfParams, int dimension)
+        public GAEncoding(int numOfParams, int dimension, double[] lowbounds, double[] highbounds)
         {
             _numOfParams = numOfParams;
             _dimension = dimension;
+            _lowbounds = lowbounds;
+            _highbounds = highbounds;
             thetaDelta = Matrix.Build.Dense(numOfParams, dimension);
             weights = Matrix.Build.Dense(numOfParams + 1, dimension);
         }
 
         // Recombination: create a new solution, call this function;
         // Add the new solution to the population
-        internal GAEncoding PanmicticRecomb(CEPool currentPool, int[] selectedList)
+        internal GAEncoding PanmicticAvgRecomb(CEPool currentPool, int[] selectedList)
         {
             // Select solution to combine
             // Find Average
@@ -45,17 +50,33 @@ namespace Core
 
             for (int i = 0; i < selectedList.Length; i++)
             {
-                avgWeight += currentPool.ElementAt(i).Key.weights;
+                avgWeight += currentPool.ElementAt(selectedList[i]).Key.weights;
             }
             avgWeight = avgWeight / selectedList.Length;
             // ... Check the sum of each row should be equal to a constant max
-            GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension);
+            GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension, _lowbounds, _highbounds);
             newSolution.weights = avgWeight;
-
+            newSolution.FixInputs(_lowbounds,_highbounds);
             return newSolution;
         }
 
-        //Simple Mutation Assumes independence of each variable
+        internal GAEncoding PanmicticDiscreteRecomb(CEPool currentPool, int[] selectedList)
+        {
+
+            GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension, _lowbounds, _highbounds);
+
+            for (int i = 0; i < _dimension; i++)
+            {
+                for (int j = 0; j < _numOfParams+1; j++)
+                {
+                    int selectedIndex = selectedList[GlobalVar.rnd.Next(0, selectedList.Length - 1)];
+                    newSolution.weights[j, i] = currentPool.ElementAt(selectedIndex).Key.weights[j, i];
+                }
+            }
+            return newSolution;
+        }
+
+        
         internal void PermutationMutation(int permuationSize)
         {
             //Shift N weight vector
@@ -78,6 +99,28 @@ namespace Core
             }
         }
 
+        //Simple Mutation Assumes independence of each variable
+        internal void RealVectSimpleMutation()
+        {
+            int[] bitArray = new int[_numOfParams + 1];
+
+            for (int i = 0; i < _dimension; i++)
+            {
+                int count = 0;
+                Array.Clear(bitArray,0,bitArray.Length);
+                while (count < (int)((_numOfParams + 1) * 0.1))
+                {
+                    int rndIndex = GlobalVar.rnd.Next(0, _numOfParams);
+                    if (bitArray[rndIndex] == 0)
+                    {
+                        weights[rndIndex, i] = GlobalVar.rnd.NextDouble();
+                        count += 1;
+                        bitArray[rndIndex] = 1;
+                    }
+                }
+            }
+        }
+
         internal Vector<double> GetRandVect(double[] lowbounds, double[] highbounds)
         {
             int[] selIndexArry = new int[_dimension];
@@ -86,7 +129,7 @@ namespace Core
             for (int i = 0; i < _dimension; i++)
             {
                 double lowIndex = 0.0;
-                double sumOfWeight = _numOfParams + 1;
+                double sumOfWeight = weights.ColumnSums()[i];
                 double rndNum = GlobalVar.rnd.NextDouble() * sumOfWeight;
                 for (int j = 0; j < _numOfParams; j++)
                 {
@@ -156,6 +199,7 @@ namespace Core
             {
                 entropy += numOfLabelsVect[i] * Math.Log10(1.0/(numOfLabelsVect[i]+0.000001));
             }
+            duplicateSamples = 0; //TESTING
         }
 
         internal void Randomize(double[] lowbounds, double[] highbounds)
@@ -212,27 +256,12 @@ namespace Core
             int[] cnt = new int[_dimension];
             double[] values = new double[2] { 1.5, 0.5 };
 
-            for (int j = 0; j < 2; j++)
+            // Initialize Weights
+            for (int i = 0; i < _dimension; i++)
             {
-                Array.Clear(cnt, 0, cnt.Length);
-                while (cnt.Any(c => c < numOfNotOne))
+                for (int j = 0; j < _numOfParams + 1; j++)
                 {
-                    Vector<double> newIndexes = Vector.Build.Dense(_dimension, (k) =>
-                    {
-                        return GlobalVar.rnd.Next(0, _numOfParams + 1);
-                    });
-                    for (int i = 0; i < _dimension; i++)
-                    {
-                        if (cnt[i] == numOfNotOne)
-                        {
-                            continue;
-                        }
-                        else if (weights[(int)newIndexes[i], i] == 1)
-                        {
-                            weights[(int)newIndexes[i], i] = values[j];
-                            cnt[i] += 1;
-                        }
-                    }
+                    weights[j, i] = GlobalVar.rnd.NextDouble();
                 }
             }
         }
