@@ -17,8 +17,8 @@ namespace Core
         public CEPool tempPool = null;
         public int maxGen = 20000;
         public double pmCrossOverRate = 0.8;
-        public double pmMutationRate = 0.1;
-        int pNumOfParams = 9;
+        public double pmMutationRate = 0.2;
+        int pNumOfParams = 10;
         int pPanCombSize = 6;
         int testSetSize = 100;
         int permuationSize = 3;
@@ -83,6 +83,7 @@ namespace Core
                 lTasks.Add(Task.Run(() =>
                 {
                     ga.CalEstFitness(testSetSize, numOfLabel, labelMatrix, lowbounds, highbounds);
+                    //ga.TrueFitness(numOfLabel, labelMatrix);
                         // Console.WriteLine("{0}'th finished assement", k);
                     }));
                 if (lTasks.Count == 8 || (tempPool.Count - k - 1 < 8))

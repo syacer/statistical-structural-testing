@@ -40,6 +40,32 @@ namespace Core
             weights = Matrix.Build.Dense(numOfParams + 1, dimension);
         }
 
+        internal void TrueFitness(int numOfLabel, Matrix<double> labelMatrix)
+        {
+            numOfLabelsVect = Vector<double>.Build.Dense(numOfLabel);
+
+            double interval = (_highbounds[0] - _lowbounds[0] + 1) * 1.0 / (_numOfParams+1);
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 10; j++)
+                {
+                    double weightx = weights[(int)(i / interval), 0];
+                    double weighty = weights[(int)(j / interval), 1];
+                    double label = labelMatrix[i, j];
+                    numOfLabelsVect[(int)label-1] += weightx*weighty;
+                }
+            }
+            var weightsum = weights.ColumnSums();
+            var totalWeight = weightsum[0] * weightsum[1];
+            numOfLabelsVect = numOfLabelsVect.Divide(totalWeight);
+            double tmpo = numOfLabelsVect.Sum();
+            entropy = 0;
+            for (int i = 0; i < numOfLabel; i++)
+            {
+                entropy += numOfLabelsVect[i] * Math.Log10(1.0 / (numOfLabelsVect[i] + 0.000001));
+            }
+            duplicateSamples = 0; //For testing
+        }
         // Recombination: create a new solution, call this function;
         // Add the new solution to the population
         internal GAEncoding PanmicticAvgRecomb(CEPool currentPool, int[] selectedList)
@@ -73,6 +99,7 @@ namespace Core
                     newSolution.weights[j, i] = currentPool.ElementAt(selectedIndex).Key.weights[j, i];
                 }
             }
+            newSolution.FixInputs(_lowbounds, _highbounds);
             return newSolution;
         }
 
@@ -239,7 +266,7 @@ namespace Core
         {
             Vector<double> low = Vector.Build.Dense(lowbounds);
             Vector<double> high = Vector.Build.Dense(highbounds);
-            Vector<double> tmp = (high - low).Add(1).Divide(_numOfParams);
+            Vector<double> tmp = (high - low).Add(1).Divide(_numOfParams+1);
             for (int i = 0; i < _numOfParams; i++)
             {
                 thetaDelta.SetRow(i, tmp);
