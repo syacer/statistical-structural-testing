@@ -23,9 +23,12 @@ namespace Core
         int testSetSize = 100;
         int permuationSize = 3;
         int numOfLabel = 10;
+        int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
         double[] highbounds = new double[] { 9, 9 };
         Matrix<double> labelMatrix;
+        public CEPool ceDB = null;
+
         public CustMOGA()
         {
             LabelMatrixCreation();
@@ -161,6 +164,104 @@ namespace Core
 
             var solutions = Print_Solution(currentBests[0]);
         }
+
+        public void UpdateDatabase()
+        {
+            for (int i = 0; i < cePool.Count; i++)
+            {
+                if (ceDB.Where(x => x.Key.id == cePool.ElementAt(i).Key.id).Count() == 0)
+                {
+                    ceDB.Add(Copy.DeepCopy(cePool.ElementAt(i).Key), new double[] {1});
+                }
+                else
+                {
+                   var tmp = ceDB.Where(x => x.Key.id == cePool.ElementAt(i).Key.id).First();
+                   tmp.Key.numOfLabelsVect = (tmp.Key.numOfLabelsVect.Multiply(tmp.Value[0]) + cePool.ElementAt(i).Key.numOfLabelsVect)
+                         .Divide(tmp.Value[0] + 1);
+                    tmp.Value[0] += 1;
+                }
+            }
+        }
+
+        public void LocalSearch()
+        {
+
+
+            // 1. Pick up number of Nearest Neighbor Solutions
+            for (int m = 0; m < popSize; m++)
+            {
+                CEPool NNSolutions = new CEPool();
+                List<Vector<double>> L2DistVects = new List<Vector<double>>();
+                for (int j = 0; j < ceDB.Count; j++)
+                {
+                    L2DistVects.Add((cePool.ElementAt(m).Key.weights - ceDB.ElementAt(j).Key.weights).RowNorms(2.0));
+                }
+
+                int[] dominatedList = new int[L2DistVects.Count];
+
+                while (!dominatedList.All(x => x == -1))
+                {
+                    for (int i = 0; i < dominatedList.Length; i++)
+                    {
+                        if (dominatedList[i] == -1)
+                        {
+                            continue;
+                        }
+                        for (int j = 0; j < dominatedList.Length; j++)
+                        {
+                            if (dominatedList[j] == -1 ||
+                                L2DistVects[i].SequenceEqual(L2DistVects[j]))
+                            {
+                                continue;
+                            }
+                            if ((L2DistVects[i]-L2DistVects[j]).All(x=>x>=0))
+                            {
+                                dominatedList[i] += 1;
+                            }
+                        }
+                    }
+                    for (int i = 0; i < dominatedList.Length; i++)
+                    {
+                        if (dominatedList[i] == 0)
+                        {   
+                            // Value is not the fitness, need to re-evaluate Fitness
+                            NNSolutions.Add(ceDB.ElementAt(i).Key, ceDB.ElementAt(i).Value);  
+                            dominatedList[i] = -1;
+                        }
+                        else if (dominatedList[i] != -1)
+                        {
+                            dominatedList[i] = 0;
+                        }
+                    }
+                    if (NNSolutions.Count >= numOfNNLocalSearch)
+                    {
+                        break;
+                    }
+                }
+
+                // Using NNSolutions to build up Surrogate Model
+                // Trust-Region Related Local Search to Find Local Optima
+                // This is only Fake Test
+                double maxEntropy = 0;
+                int index = 0;
+                for (int i = 0; i < NNSolutions.Count; i++)
+                {
+                    double entropy = 0;
+                    for (int j = 0; j < numOfLabel; j++)
+                    {
+                        entropy += NNSolutions.ElementAt(i).Key.numOfLabelsVect[j] 
+                            * Math.Log10(1.0 / (NNSolutions.ElementAt(i).Key.numOfLabelsVect[j] + 0.000001));
+                    }
+                    if (entropy > maxEntropy)
+                    {
+                        maxEntropy = entropy;
+                        index = i;
+                    }
+                }
+                cePool.Remove(cePool.ElementAt(m).Key);
+                cePool.Add(Copy.DeepCopy(ceDB.ElementAt(index).Key), new double[] { -1 });
+            }
+        }
         public void MOGA_Start()
         {
             MOGA_Initialization();
@@ -171,7 +272,9 @@ namespace Core
             token[0] = 0;
             MOGA_NormalizeFitness();
             PopulationGen(); //tmpPool -> cePool
+            UpdateDatabase();
             UpdateRecordAndDisplay();
+
 
             // Start MOGA
             while (gen < maxGen)
@@ -184,6 +287,15 @@ namespace Core
                 MOGA_NormalizeFitness();
                 PopulationGen();
                 UpdateRecordAndDisplay();
+                if (ceDB.Count < numOfNNLocalSearch)
+                {
+                    UpdateDatabase();
+                }
+                else
+                {
+                    //LocalSearch();
+                    ceDB.Clear();
+                }
             }
         }
         private void MOGA_NormalizeFitness()
@@ -243,6 +355,8 @@ namespace Core
         {
             cePool = new CEPool();
             tempPool = new CEPool();
+            ceDB = new CEPool();
+            numOfNNLocalSearch = 1000; //(pNumOfParams + 1) * (pNumOfParams + 2) / 2 * dimension;
             for (int i = 0; i < popSize; i++)
             {
                 var newSolution = new GAEncoding(pNumOfParams, dimension, lowbounds, highbounds);
@@ -266,7 +380,7 @@ namespace Core
                 child = Copy.DeepCopy(cePool.ElementAt(selectedList[0]).Key);
                 if (GlobalVar.rnd.NextDouble() <= pmCrossOverRate)
                 {
-                    if (GlobalVar.rnd.NextDouble() <= 0.2)
+                    if (GlobalVar.rnd.NextDouble() <= 0.8)
                     {
                         child = cePool.ElementAt(0).Key.PanmicticDiscreteRecomb(cePool, selectedList);
                     }

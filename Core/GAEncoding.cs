@@ -18,9 +18,9 @@ namespace Core
         //parm3 |p7,    p8,    p9 |
         //........................
         // Each weight ranges within [0,1]
-
+        public string id;
         public Matrix<double> thetaDelta;
-        Vector<double> numOfLabelsVect;
+        public Vector<double> numOfLabelsVect;
         public Matrix<double> weights;
         public int rank = -1;
         public int duplicateSamples = 0;
@@ -40,6 +40,17 @@ namespace Core
             weights = Matrix.Build.Dense(numOfParams + 1, dimension);
         }
 
+        public void UpdateID()
+        {
+            id = null;
+            for (int i = 0; i < weights.ToColumnArrays().Length; i++)
+            {
+                for (int j = 0; j < weights.ToColumnArrays()[i].Length; j++)
+                {
+                    id += weights.ToColumnArrays()[i][j] + " ";
+                }
+            }
+        }
         // Recombination: create a new solution, call this function;
         // Add the new solution to the population
         internal GAEncoding PanmicticAvgRecomb(CEPool currentPool, int[] selectedList)
@@ -73,6 +84,8 @@ namespace Core
                     newSolution.weights[j, i] = currentPool.ElementAt(selectedIndex).Key.weights[j, i];
                 }
             }
+            newSolution.FixInputs(_lowbounds, _highbounds);
+            newSolution.UpdateID();
             return newSolution;
         }
 
@@ -97,6 +110,7 @@ namespace Core
                 weights.SetRow(permuationSize - j - 1, weightVector.Dequeue());
                 j = j + 1;
             }
+            UpdateID();
         }
 
         //Simple Mutation Assumes independence of each variable
@@ -119,6 +133,7 @@ namespace Core
                     }
                 }
             }
+            UpdateID();
         }
 
         internal Vector<double> GetRandVect(double[] lowbounds, double[] highbounds)
@@ -264,6 +279,7 @@ namespace Core
                     weights[j, i] = GlobalVar.rnd.NextDouble();
                 }
             }
+            UpdateID();
         }
     }
 }
