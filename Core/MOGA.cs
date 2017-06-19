@@ -25,7 +25,7 @@ namespace Core
         int numOfLabel = 10;
         int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
-        double[] highbounds = new double[] { 9, 9 };
+        double[] highbounds = new double[] { 10, 10 };
         Matrix<double> labelMatrix;
         public CEPool ceDB = null;
 
@@ -271,7 +271,8 @@ namespace Core
             MOGA_FitnessEvaluation(token);
             while (token[0] == 0) ;
             token[0] = 0;
-            MOGA_NormalizeFitness();
+            MOGA_NormalizeFitness(true);
+            AdditionalSampling();
             PopulationGen(); //tmpPool -> cePool
             UpdateDatabase();
             UpdateRecordAndDisplay();
@@ -285,7 +286,8 @@ namespace Core
                 MOGA_FitnessEvaluation(token);
                 while (token[0] == 0) ;
                 token[0] = 0;
-                MOGA_NormalizeFitness();
+                MOGA_NormalizeFitness(true);
+                AdditionalSampling();
                 PopulationGen();
                 UpdateRecordAndDisplay();
                 if (ceDB.Count < numOfNNLocalSearch)
@@ -299,7 +301,49 @@ namespace Core
                 }
             }
         }
-        private void MOGA_NormalizeFitness()
+
+        private void AdditionalSampling()
+        {
+            int paramR_Max = 10;
+            int paramM = 3;
+            double paramAlfa = 2;
+            int n = 0, n_min = testSetSize, n_max = testSetSize * 100;
+            double r = 0;
+
+            paramR_Max = tempPool.Max(x => x.Key.rank);
+            paramM = (int)(paramR_Max * 0.4);
+            var tmp = Copy.DeepCopy(tempPool.Where(x => x.Key.rank > paramM).ToList());
+            var tmp2 = tempPool.Where((x)=> x.Key.rank > paramM);
+            
+            while (tmp2.Count() != 0)
+            {
+                tempPool.Remove(tmp2.ElementAt(0).Key);
+            }
+            //Linear Dynamic Sampling
+            for (int i = 0; i < tempPool.Count; i++)
+            {
+                int R = tempPool.ElementAt(i).Key.rank;
+                if (R >= paramR_Max)
+                {
+                    r = 1;
+                }
+                else
+                {
+                    r = 1 - Math.Pow((Math.Min(R, paramM) - 1)*1.0 / (Math.Min(paramR_Max, paramM) - 1), paramAlfa);
+                }
+                n = Convert.ToInt16(n_min + (n_max - n_min) * r) + n_min;
+                n = 10000;
+                tempPool.ElementAt(i).Key.CalEstFitness(n,numOfLabel,labelMatrix,lowbounds,highbounds);
+            }
+            MOGA_NormalizeFitness(false);
+
+            for (int i = 0; i < tmp.Count(); i++)
+            {
+                tempPool.Add(tmp.ElementAt(i).Key, tmp.ElementAt(i).Value);
+            }
+        }
+
+        private void MOGA_NormalizeFitness(bool needFintessCal)
         {
             //Form Total Order, (A, B) A: Entropy, B: Duplicates
             int rank = 1;
@@ -345,7 +389,11 @@ namespace Core
                 rank += 1;
             }
             rank -= 1;
-            // Linear Ranking with rank reversal
+            // Fitness calculation: Linear Ranking with rank reversal
+            if (needFintessCal == false)
+            {
+                return;
+            }
             for (int i = 0; i < popSize; i++)
             {
                 tempPool.ElementAt(i).Value[0] = 2 * (rank - tempPool.ElementAt(i).Key.rank + 1) * 1.0 / (popSize * (popSize - 1));
@@ -357,6 +405,7 @@ namespace Core
             cePool = new CEPool();
             tempPool = new CEPool();
             ceDB = new CEPool();
+            Console.BackgroundColor = ConsoleColor.DarkRed;
             numOfNNLocalSearch = 1000; //(pNumOfParams + 1) * (pNumOfParams + 2) / 2 * dimension;
             for (int i = 0; i < popSize; i++)
             {

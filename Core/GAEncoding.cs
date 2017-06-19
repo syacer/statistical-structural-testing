@@ -214,7 +214,6 @@ namespace Core
             {
                 entropy += numOfLabelsVect[i] * Math.Log10(1.0/(numOfLabelsVect[i]+0.000001));
             }
-            duplicateSamples = 0; //TESTING
         }
 
         internal void Randomize(double[] lowbounds, double[] highbounds)
@@ -254,22 +253,11 @@ namespace Core
         {
             Vector<double> low = Vector.Build.Dense(lowbounds);
             Vector<double> high = Vector.Build.Dense(highbounds);
-            Vector<double> tmp = (high - low).Add(1).Divide(_numOfParams);
+            Vector<double> tmp = (high - low).Divide(_numOfParams);
             for (int i = 0; i < _numOfParams; i++)
             {
                 thetaDelta.SetRow(i, tmp);
             }
-
-            int numOfOne = Convert.ToInt16(Math.Ceiling((_numOfParams + 1) * 0.2));
-            int numOfNotOne = (_numOfParams - numOfOne) / 2;
-
-            for (int i = 0; i < _numOfParams + 1; i++)
-            {
-                weights = Matrix.Build.Dense(_numOfParams + 1, _dimension, 1);
-            }
-
-            int[] cnt = new int[_dimension];
-            double[] values = new double[2] { 1.5, 0.5 };
 
             // Initialize Weights
             for (int i = 0; i < _dimension; i++)
