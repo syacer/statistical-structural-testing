@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Copy.cs" />
     <Compile Include="GAEncoding.cs" />
+    <Compile Include="LocalFileAccess.cs" />
     <Compile Include="MOGA.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

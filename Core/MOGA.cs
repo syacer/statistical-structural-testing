@@ -18,14 +18,13 @@ namespace Core
         public int maxGen = 20000;
         public double pmCrossOverRate = 0.8;
         public double pmMutationRate = 0.2;
-        int pNumOfParams = 10;
+        int pNumOfParams = 50;
         int pPanCombSize = 6;
         int testSetSize = 100;
-        int permuationSize = 3;
         int numOfLabel = 10;
         int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
-        double[] highbounds = new double[] { 10, 10 };
+        double[] highbounds = new double[] { 50, 50 };
         Matrix<double> labelMatrix;
         public CEPool ceDB = null;
 
@@ -85,11 +84,11 @@ namespace Core
 
                 lTasks.Add(Task.Run(() =>
                 {
-                    ga.CalEstFitness(testSetSize, numOfLabel, labelMatrix, lowbounds, highbounds);
-                    //ga.TrueFitness(numOfLabel, labelMatrix);
+                    //ga.CalEstFitness(testSetSize, numOfLabel, labelMatrix, lowbounds, highbounds);
+                    ga.TrueFitnessCal(numOfLabel, labelMatrix);
                         // Console.WriteLine("{0}'th finished assement", k);
                     }));
-                if (lTasks.Count == 8 || (tempPool.Count - k - 1 < 8))
+                if (lTasks.Count == 1 || (tempPool.Count - k - 1 < 1))  //8,8
                 {
                     for (int i = 0; i < lTasks.Count; i++)
                     {
@@ -155,7 +154,11 @@ namespace Core
             currentFitnessList = new List<double>();
             Console.WriteLine("Generation: {0}", gen);
             currentBests = cePool.Where(x => x.Key.rank == 1).Select(x => x.Key).ToList();
-
+            LocalFileAccess lfa = new LocalFileAccess();
+            foreach (var best in currentBests)
+            {
+                lfa.StoreListToLinesAppend(@"C:\Users\Yang Shi\Desktop\record", Print_Solution(best));
+            }
             for (int i = 0; i < currentBests.Count; i++)
             {
                 fitness.Add(new Tuple<double, int>(currentBests[i].entropy, currentBests[i].duplicateSamples));
@@ -272,7 +275,7 @@ namespace Core
             while (token[0] == 0) ;
             token[0] = 0;
             MOGA_NormalizeFitness(true);
-            AdditionalSampling();
+           // AdditionalSampling();
             PopulationGen(); //tmpPool -> cePool
             UpdateDatabase();
             UpdateRecordAndDisplay();
@@ -287,7 +290,7 @@ namespace Core
                 while (token[0] == 0) ;
                 token[0] = 0;
                 MOGA_NormalizeFitness(true);
-                AdditionalSampling();
+               // AdditionalSampling();
                 PopulationGen();
                 UpdateRecordAndDisplay();
                 if (ceDB.Count < numOfNNLocalSearch)
@@ -332,7 +335,7 @@ namespace Core
                     r = 1 - Math.Pow((Math.Min(R, paramM) - 1)*1.0 / (Math.Min(paramR_Max, paramM) - 1), paramAlfa);
                 }
                 n = Convert.ToInt16(n_min + (n_max - n_min) * r) + n_min;
-                n = 10000;
+                n = 1000;
                 tempPool.ElementAt(i).Key.CalEstFitness(n,numOfLabel,labelMatrix,lowbounds,highbounds);
             }
             MOGA_NormalizeFitness(false);
@@ -552,15 +555,15 @@ namespace Core
                         {
                             labelMatrix[i, j] = 8;
                         }
-                        else if (j <= 6)
+                        else if (j <= 8)
                         {
                             labelMatrix[i, j] = 3;
                         }
-                        else if (j <= 8)
+                        else if (j <= 40)
                         {
                             labelMatrix[i, j] = 8;
                         }
-                        else if (j <= 10)
+                        else if (j <= 50)
                         {
                             labelMatrix[i, j] = 9;
                         }
@@ -575,20 +578,20 @@ namespace Core
                         {
                             labelMatrix[i, j] = 4;
                         }
-                        else if (j <= 6)
-                        {
-                            labelMatrix[i, j] = 2;
-                        }
                         else if (j <= 8)
                         {
                             labelMatrix[i, j] = 2;
                         }
-                        else if (j <= 10)
+                        else if (j <= 40)
+                        {
+                            labelMatrix[i, j] = 2;
+                        }
+                        else if (j <= 50)
                         {
                             labelMatrix[i, j] = 10;
                         }
                     }
-                    else if (i <= 9)
+                    else if (i <= 49)
                     {
                         if (j <= 1)
                         {
@@ -598,20 +601,20 @@ namespace Core
                         {
                             labelMatrix[i, j] = 3;
                         }
-                        else if (j <= 6)
-                        {
-                            labelMatrix[i, j] = 2;
-                        }
                         else if (j <= 8)
                         {
                             labelMatrix[i, j] = 2;
                         }
-                        else if (j <= 10)
+                        else if (j <= 40)
+                        {
+                            labelMatrix[i, j] = 2;
+                        }
+                        else if (j <= 50)
                         {
                             labelMatrix[i, j] = 9;
                         }
                     }
-                    else if (i <= 10)
+                    else if (i <= 50)
                     {
                         if (j <= 1)
                         {
@@ -621,15 +624,15 @@ namespace Core
                         {
                             labelMatrix[i, j] = 6;
                         }
-                        else if (j <= 6)
+                        else if (j <= 8)
                         {
                             labelMatrix[i, j] = 7;
                         }
-                        else if (j <= 8)
+                        else if (j <= 40)
                         {
                             labelMatrix[i, j] = 1;
                         }
-                        else if (j <= 10)
+                        else if (j <= 50)
                         {
                             labelMatrix[i, j] = 10;
                         }
