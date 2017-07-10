@@ -19,15 +19,6 @@ namespace Core
     {
         static void Main(string[] args)
         {
-            Vector<double>  numOfLabelsVect = Vector<double>
-                .Build.Dense(new double[] {1.0/6, 1.0 / 6, 1.0 / 6,
-                1.0/6,1.0/6,1.0/6});
-
-            double entropy = 0;
-            for (int i = 0; i < 6; i++)
-            {
-                entropy += numOfLabelsVect[i] * Math.Log10(1.0 / (numOfLabelsVect[i] + 0.000001));
-            }
             new CustMOGA().MOGA_Start();
         }
     }
