@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MathNet.Numerics.LinearAlgebra;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
-namespace Core
+namespace WeightEvolve
 {
     public static class GlobalVar
     {
@@ -15,14 +14,18 @@ namespace Core
         private static ThreadLocal<Random> threadLocal = new ThreadLocal<Random>
             (() => new Random(Interlocked.Increment(ref seed)));
         public static Random rnd { get { return threadLocal.Value; } }
-
     }
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
         {
-            new CustMOGA().MOGA_Start();
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
         }
     }
 }
-
