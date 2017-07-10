@@ -11,9 +11,11 @@ namespace Core
     public static class GlobalVar
     {
         private static int seed = Environment.TickCount;
+        public static Mutex mutex_K = new Mutex(false, "lockFork");
         private static ThreadLocal<Random> threadLocal = new ThreadLocal<Random>
             (() => new Random(Interlocked.Increment(ref seed)));
         public static Random rnd { get { return threadLocal.Value; } }
+
     }
     class Program
     {

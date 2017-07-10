@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MathNet.Numerics.LinearAlgebra;
+using System.Threading;
 
 namespace Core
 {
@@ -72,23 +73,26 @@ namespace Core
         {
             List<Task> lTasks = new List<Task>();
             int remainTasks = tempPool.Count;
+
             // Test inputs Generation
             // Fitness Evaluation
-            for (int k = 0; k < tempPool.Count; k++)
+            for (int k = 0; k < tempPool.Count; )
             {
-                //Console.WriteLine("{0}'th genotype fitness assement", k);
-                GAEncoding ga = tempPool.ElementAt(k).Key;
-
                 // Single Thread
                 //ga.CalEstFitness(testSetSize, numOfLabel, labelMatrix, lowbounds, highbounds);
 
                 lTasks.Add(Task.Run(() =>
                 {
+                    GlobalVar.mutex_K.WaitOne();
+                    //Console.WriteLine(k);
+                    GAEncoding ga = tempPool.ElementAt(k).Key;
+                    k = k + 1;
+                    GlobalVar.mutex_K.ReleaseMutex();
                     //ga.CalEstFitness(testSetSize, numOfLabel, labelMatrix, lowbounds, highbounds);
                     ga.TrueFitnessCal(numOfLabel, labelMatrix);
                         // Console.WriteLine("{0}'th finished assement", k);
                     }));
-                if (lTasks.Count == 1 || (tempPool.Count - k - 1 < 1))  //8,8
+                if (lTasks.Count == 8 || (tempPool.Count - k - 1 < 8))  //8,8
                 {
                     for (int i = 0; i < lTasks.Count; i++)
                     {
