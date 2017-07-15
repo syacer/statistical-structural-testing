@@ -6,6 +6,7 @@ using MathNet.Numerics.LinearAlgebra;
 using System.Threading;
 
 // Looks like it is not a good method to use Entropy. So Sepetate each cover elment in evlovment
+// Fitness Changes in FitnessPropotinateSampling. IT IS WRONG!!!! see correct implementation in WeightEvolve
 namespace Core
 {
     using CEPool = Dictionary<GAEncoding, double[]>;

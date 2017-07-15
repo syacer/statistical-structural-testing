@@ -19,7 +19,7 @@ namespace WeightEvolve
 
         private void button1_Click(object sender, EventArgs e)
         {
-            new GA().GA_Start();
+            Task.Run(()=> new GA().GA_Start());
         }
 
     }
