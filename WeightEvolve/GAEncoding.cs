@@ -22,10 +22,11 @@ namespace WeightEvolve
         public Matrix<double> thetaDelta;
         public Vector<double> numOfLabelsVect;
         public Vector<double> numOfLabelsVect2;
-        public Matrix<double> weights;
+        public Vector<double> weightsVect;
         public int rank = -1;
         public int duplicateSamples = 0;
         public double entropy = 0;
+        public double diversity = 0;
         int _numOfParams;
         int _dimension;
         double[] _lowbounds;
@@ -38,67 +39,14 @@ namespace WeightEvolve
             _lowbounds = lowbounds;
             _highbounds = highbounds;
             thetaDelta = Matrix.Build.Dense(numOfParams, dimension);
-            weights = Matrix.Build.Dense(numOfParams, dimension);
+            weightsVect = Vector.Build.Dense(numOfParams*numOfParams);
         }
 
         public void UpdateID()
         {
             id = Guid.NewGuid().ToString();
         }
-        public void TrueFitnessCal(int numOfLabel, Matrix<double>labelMatrix)
-        {
-            numOfLabelsVect = Vector<double>.Build.Dense(numOfLabel);
-            double totalWeights = (weights.ColumnSums()[0] + weights.Column(0)[weights.Column(0).Count-1])
-                * (weights.ColumnSums()[1] + weights.Column(1)[weights.Column(1).Count - 1]);
-            double vectWeight = 0;
-            double temp = 0;
-            for (double i = _lowbounds[0]; i <= _highbounds[0]; i++)
-            {
-                for (double j = _lowbounds[1]; j <= _highbounds[1]; j++)
-                {
-                    vectWeight = WeightsFinder(new double[] {i,j })/totalWeights;
-                    temp = vectWeight + temp;
-                    int label = (int)labelMatrix.At((int)i, (int)j);
-                    if (label <= numOfLabel)
-                    {
-                        numOfLabelsVect[label - 1] += vectWeight;
-                    }
 
-                }
-            }
-            
-            double entropy = 0;
-            for (int i = 0; i < numOfLabel; i++)
-            {
-                entropy += numOfLabelsVect[i] * Math.Log10(1.0 / (numOfLabelsVect[i] + 0.000001));
-            }
-        }
-        public double WeightsFinder(double[] input)
-        {
-            double[] resultWeights = new double[_dimension];
-            for (int i = 0; i < _dimension; i++)
-            {
-                double temp = _lowbounds[i];
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    if (input[i] <= temp)
-                    {
-                        resultWeights[i] = weights[j, i];
-                        break;
-                    }
-                    else
-                    {
-                        temp = temp + thetaDelta[j,i];
-                        if (temp == _highbounds[i])
-                        {
-                            resultWeights[i] = weights[j, i];
-                        }
-                    }
-                }
-            }
-
-            return resultWeights[0] * resultWeights[1];
-        }
         // Recombination: create a new solution, call this function;
         // Add the new solution to the population
         internal GAEncoding IntermidinateRecomb(CEPool currentPool, int[] selectedList)
@@ -107,71 +55,51 @@ namespace WeightEvolve
             GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension, _lowbounds, _highbounds);
             double alpha = GlobalVar.rnd.NextDouble();
             alpha = (1 + d - -1 * d) * alpha + -1 * d;
-            var deltaW = currentPool.ElementAt(selectedList[1]).Key.weights
-                       - currentPool.ElementAt(selectedList[0]).Key.weights;
-            newSolution.weights = 
-                deltaW.Multiply(alpha) + currentPool.ElementAt(selectedList[0]).Key.weights;
+            var deltaW = currentPool.ElementAt(selectedList[1]).Key.weightsVect
+                       - currentPool.ElementAt(selectedList[0]).Key.weightsVect;
+            newSolution.weightsVect = 
+                deltaW.Multiply(alpha) + currentPool.ElementAt(selectedList[0]).Key.weightsVect;
 
-            var test = weights.ColumnSums()[0] * weights.ColumnSums()[1];
-
-            newSolution.FixInputs(_lowbounds, _highbounds);
-            newSolution.UpdateID();
-            return newSolution;
-        }
-        internal GAEncoding IntermidinateRecomb_old(CEPool currentPool, int[] selectedList)
-        {
-            double d = 0.25;
-            GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension, _lowbounds, _highbounds);
-            for (int i = 0; i < _dimension; i++)
+            double test = newSolution.weightsVect.Sum();
+            if (test > _numOfParams * _numOfParams + 0.001 || test < _numOfParams * _numOfParams - 0.001)
             {
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    double alpha = GlobalVar.rnd.NextDouble();
-                    alpha = (1 + d - -1 * d) * alpha + -1 * d;
-                    newSolution.weights[j, i] =
-                        currentPool.ElementAt(selectedList[0])
-                        .Key.weights[j, i] * alpha +
-                        currentPool.ElementAt(selectedList[1])
-                        .Key.weights[j, i] * (1 - alpha);
-                    if (newSolution.weights[j, i] > 1)
-                    {
-                        newSolution.weights[j, i] = 1;
-                    }
-                    if (newSolution.weights[j, i] <= 0)
-                    {
-                        newSolution.weights[j, i] = 0.00001;
-                    }
-                }
+                Console.WriteLine();
             }
             newSolution.FixInputs(_lowbounds, _highbounds);
             newSolution.UpdateID();
             return newSolution;
         }
 
-        internal GAEncoding PanmicticDiscreteRecomb(CEPool currentPool, int[] selectedList)
+        internal GAEncoding DifferentialCrossover(CEPool currentPool, int[] selectedList)
         {
-
-            GAEncoding newSolution = new GAEncoding(_numOfParams, _dimension, _lowbounds, _highbounds);
-
-            for (int i = 0; i < _dimension; i++)
+            double F = 1.5; //[0,2]
+            UpdateID();
+            
+            for (int i = 0; i < weightsVect.Count; i++)
             {
-                for (int j = 0; j < _numOfParams; j++)
+                if (GlobalVar.rnd.NextDouble() <= 0.9)
                 {
-                    int selectedIndex = selectedList[GlobalVar.rnd.Next(0, selectedList.Length - 1 + 1)];
-                    newSolution.weights[j, i] = currentPool.ElementAt(selectedIndex).Key.weights[j, i];
-                    if (newSolution.weights[j, i] > 1)
+                    weightsVect[i] = currentPool.ElementAt(selectedList[0]).Key.weightsVect[i]
+                        + F * currentPool.ElementAt(selectedList[0]).Key.weightsVect[i] -
+                        currentPool.ElementAt(selectedList[1]).Key.weightsVect[i];
+                    if (weightsVect[i] < 0)
                     {
-                        newSolution.weights[j, i] = 1;
+                        weightsVect[i] = 0;
                     }
-                    if (newSolution.weights[j, i] <= 0)
+                    if (weightsVect[i] > 10000)
                     {
-                        newSolution.weights[j, i] = 0.00001;
+                        weightsVect[i] = 10000;
                     }
                 }
             }
-            newSolution.FixInputs(_lowbounds, _highbounds);
-            newSolution.UpdateID();
-            return newSolution;
+
+
+            double test = this.weightsVect.Sum();
+            if (test > _numOfParams * _numOfParams + 0.001 || test < _numOfParams * _numOfParams - 0.001)
+            {
+                //Console.WriteLine("AAAA");
+            }
+            return this;
         }
         //Simple Mutation Assumes independence of each variable
         internal GAEncoding RealVectMutation()
@@ -180,102 +108,75 @@ namespace WeightEvolve
             UpdateID();
             newSolution.FixInputs(_lowbounds, _highbounds);
 
-            for (int i = 0; i < _numOfParams; i++)
+            //for (int i = 0; i < _numOfParams * _numOfParams; i++)
+            //{
+            //    if (GlobalVar.rnd.NextDouble()
+            //        <= 2.0 / (_numOfParams * _numOfParams))
+            //    {
+            //        double k_MutPrecision = 1;
+            //        double u = GlobalVar.rnd.NextDouble();
+            //        int s_Direction = GlobalVar.rnd.NextDouble() <= 0.5 ? -1 : 1;
+            //        double a_StepSize1 = 10*u + s_Direction;
+            //        double mean = weightsVect.Sum()/(_numOfParams*_numOfParams);
+            //        weightsVect[i] = weightsVect[i] * a_StepSize1 + mean * (1 - a_StepSize1);
+            //        if (weightsVect[i] <= 0)
+            //        {
+            //            weightsVect[i] = 0.0001;
+            //        }
+            //    }
+            //}
+
+            if (GlobalVar.rnd.NextDouble() <= 1.0 / 100)
             {
-                for (int j = 0; j < _numOfParams; j++)
+                for (int i = 0; i < _numOfParams * _numOfParams; i++)
                 {
-                    if (GlobalVar.rnd.NextDouble()
-                        <= 1.0 / (_numOfParams * _numOfParams))
-                    {
                         double k_MutPrecision = 1;
                         double u = GlobalVar.rnd.NextDouble();
                         int s_Direction = GlobalVar.rnd.NextDouble() <= 0.5 ? -1 : 1;
-                        double a_StepSize1 = 10*u + s_Direction;
-
-                        u = GlobalVar.rnd.NextDouble();
-                        s_Direction = GlobalVar.rnd.NextDouble() <= 0.5 ? -1 : 1;
-                        double a_StepSize2 = 10*u + s_Direction;
-                        Vector<double> mean = weights.ColumnSums().Divide(_numOfParams);
-                        weights[i, 0] = weights[i, 0] * a_StepSize1 + mean[0] * (1 - a_StepSize1);
-                        weights[j, 1] = weights[j, 1] * a_StepSize2 + mean[1] * (1 - a_StepSize2);
-                        if (weights[i, 0] <= 0)
+                        double a_StepSize1 = 10 * u + s_Direction;
+                        double mean = weightsVect.Sum() / (_numOfParams * _numOfParams);
+                        weightsVect[i] = weightsVect[i] * a_StepSize1 + mean * (1 - a_StepSize1);
+                        if (weightsVect[i] <= 0)
                         {
-                            weights[i, 0] = 0.0001;
+                            weightsVect[i] = 0.0001;
                         }
-                        if (weights[j, 1] <= 0)
-                        {
-                            weights[j, 1] = 0.0001;
-                        }
-                    }
                 }
             }
 
-            // Normalize
-            for (int i = 0; i < _dimension; i++)
+            weightsVect = weightsVect.Normalize(1).Multiply(_numOfParams * _numOfParams);
+
+            double test = weightsVect.Sum();
+            if (test > _numOfParams * _numOfParams + 0.001 || test < _numOfParams * _numOfParams - 0.001)
             {
-                double total = weights.ColumnSums()[i];
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    weights[j, i] = (weights[j, i] / total) * _numOfParams;
-                }
+                Console.WriteLine();
             }
-            var test = weights.ColumnSums()[0] * weights.ColumnSums()[1];
-
             return newSolution;
         }
         //Simple Mutation Assumes independence of each variable
-        internal void RealVectMutation_old()
-        {
-            for (int i = 0; i < _dimension; i++)
-            {
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    if (GlobalVar.rnd.NextDouble() 
-                        <= 1.0 / (_numOfParams * _dimension))
-                    {
-                        int s_Direction = GlobalVar.rnd.NextDouble() <= 0.5 ? -1 : 1;
-                        double r_MutRange = 0.1 * 1; //1: domain range
-                        double k_MutPrecision = 16;
-                        double u = GlobalVar.rnd.NextDouble();
-                        double a_StepSize = Math.Pow(2, -1 * u * k_MutPrecision);
-                        weights[j, i] += s_Direction * r_MutRange * a_StepSize;
-
-                        if (weights[j, i] > 1)
-                        {
-                            weights[j, i] = 1;
-                        }
-                        if (weights[j, i] <= 0)
-                        {
-                            weights[j, i] = 0.00001;
-                        }
-                    }
-                }
-            }
-            UpdateID();
-        }
-
+  
         internal Vector<double> GetRandVect(double[] lowbounds, double[] highbounds)
         {
-            int[] selIndexArry = new int[_dimension];
-            
+            int blockIndex = -1;
+            double sumOfWeight = weightsVect.Sum();
+
             // First, Select a block
-            for (int i = 0; i < _dimension; i++)
+            for (int i = 0; i < _numOfParams*_numOfParams; i++)
             {
                 double lowIndex = 0.0;
-                double sumOfWeight = weights.ColumnSums()[i];
                 double rndNum = GlobalVar.rnd.NextDouble() * sumOfWeight;
-                for (int j = 0; j < _numOfParams; j++)
+                if (rndNum >= lowIndex && rndNum <= lowIndex + weightsVect[i])
                 {
-                    if (rndNum >= lowIndex && rndNum <= lowIndex + weights[j, i])
-                    {
-                        selIndexArry[i] = j;
-                        break;
-                    }
-                    lowIndex = lowIndex + weights[j, i];
+                    blockIndex = i;
+                    break;
                 }
+                lowIndex = lowIndex + weightsVect[i];
             }
-            
+
+            int x2 = blockIndex / _numOfParams;
+            int x1 = blockIndex % _numOfParams;
+            int[] selIndexArry = new int[2] {x1,x2 };
             double[] result = new double[_dimension];
+
             for (int i = 0; i < _dimension; i++)
             {
                 if (selIndexArry[i] == 0)
@@ -338,82 +239,44 @@ namespace WeightEvolve
             duplicateSamples = 0;
         }
 
-        internal void Randomize(double[] lowbounds, double[] highbounds)
-        {
-            Vector<double> tmp = Vector.Build.Dense(lowbounds);
-            Vector<double> tmpW = Vector.Build.Dense(
-                _dimension,
-                (k) =>
-                {
-                    return 0;
-                }
-            );
-
-            for (int i = 0; i < _numOfParams; i++)
-            {
-                Vector<double> newParam = Vector.Build.Dense(_dimension, (k) =>
-                {
-                    return GlobalVar.rnd.Next((int)tmp[k], (int)highbounds[k] + 1);
-                });
-                thetaDelta.SetRow(i, newParam - tmp);
-                tmp = newParam;
-            }
-
-            for (int i = 0; i < _numOfParams; i++)
-            {
-                Vector<double> newWeight = Vector.Build.Dense(_dimension, (k) =>
-                {
-                    return GlobalVar.rnd.Next(0, _numOfParams - (int)tmpW[k] + 1);
-                });
-                tmpW = newWeight + tmpW;
-                weights.SetRow(i, newWeight.ToArray());
-            }
-            weights.SetRow(_numOfParams, tmpW.SubtractFrom(_numOfParams).ToArray());
-        }
-
         internal void FitnessCal(Matrix<double> aMatrix)
         {
             // First, Calculate Total Weights;
             // And create weight Vector from weight matrix
-            double totalWeights = 0;
+            double totalWeights = weightsVect.Sum();
+            diversity = 0;
             entropy = 0;
-            Vector<double> weightVect = Vector<double>.Build
-                .Dense((int)Math.Pow(_numOfParams,2));
-            for (int i = 0; i < _numOfParams; i++)
-            {
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    double weight = weights[j, 0] * weights[i, 1];
-                    totalWeights += weight;
-                    int vVectIndex = j + i * _numOfParams;
-                    weightVect[vVectIndex] = weight;
-                }
-            }
 
             // Calculate Entropy
-            numOfLabelsVect2 = Vector<double>.Build.Dense(aMatrix.ColumnCount);
-            
-            for (int i = 0; i < aMatrix.ColumnCount; i++)
+            numOfLabelsVect2 = Vector.Build.Dense(
+                aMatrix.Transpose()
+                .Multiply(weightsVect)
+                .Divide(totalWeights).ToArray());
+
+            for (int i = 0; i < numOfLabelsVect2.Count; i++)
             {
-                double temp = aMatrix.Column(i).ToRowMatrix().Multiply(weightVect).First();
-                double pOfLabel = temp / totalWeights;
-                numOfLabelsVect2[i] = pOfLabel;
-                entropy += pOfLabel*Math.Log(Math.Pow(pOfLabel+0.000001,-1),2);
+                entropy += numOfLabelsVect2[i] * Math.Log(Math.Pow(numOfLabelsVect2[i] + 0.000001, -1), 2);
             }
 
-            // Only Testing
-            //double entropy2 = 0;
-            //Vector<double> weightVect2 = Vector<double>.Build
-            //    .Dense((int)Math.Pow(_numOfParams, 2));
-            //weightVect2 = weightVect2.Add(1);
-            //totalWeights = weightVect2.Sum();
-            //for (int i = 0; i < aMatrix.ColumnCount; i++)
+            //// Calculate Diversity
+            //Vector<double> meanVect = numOfLabelsVect2;
+            //Vector<double>[] temp = new Vector<double>[aMatrix.ColumnCount];
+            //Vector<double>[] temp2 = new Vector<double>[aMatrix.RowCount];
+            //for (int i = 0; i < temp.Length; i++)
             //{
-            //    double temp = aMatrix.Column(i).ToRowMatrix().Multiply(weightVect2).First();
-            //    double pOfLabel = temp / totalWeights;
-            //    numOfLabelsVect2[i] = pOfLabel;
-            //    entropy2 += pOfLabel * Math.Log(Math.Pow(pOfLabel + 0.000001, -1), 2);
+            //    temp[i] = weightsVect.Divide(weightsVect.Sum());
             //}
+            //for (int i = 0; i < temp2.Length; i++)
+            //{
+            //    temp2[i] = meanVect;
+            //}
+            //Matrix<double> wMatrix = Matrix.Build.DenseOfColumnVectors(temp);
+            //Matrix<double> meanMatrix = Matrix.Build.DenseOfRowVectors(temp2);
+            //Vector<double> tempVect = aMatrix.PointwiseMultiply(wMatrix)
+            //    .Subtract(meanMatrix)
+            //    .PointwisePower(2)
+            //    .ColumnSums().Divide(weightsVect.Count);
+            //diversity = tempVect.Sum();
         }
         internal void FixInputs(double[] lowbounds, double[] highbounds)
         {
@@ -426,24 +289,15 @@ namespace WeightEvolve
             }
 
             // Initialize Weights
-            for (int i = 0; i < _dimension; i++)
+            for (int i = 0; i < _numOfParams * _numOfParams; i++)
             {
-                for (int j = 0; j < _numOfParams; j++)
-                {
-                    weights[j, i] = GlobalVar.rnd.NextDouble();
-                }
+                weightsVect[i] = GlobalVar.rnd.NextDouble();
             }
-            double sumWeights = weights.ColumnSums()[0];
-            for (int j = 0; j < _numOfParams; j++)
-            {
-                weights[j, 0] = (weights[j,0] / sumWeights) *_numOfParams;
-            }
-            sumWeights = weights.ColumnSums()[1];
-            for (int j = 0; j < _numOfParams; j++)
-            {
-                weights[j, 1] = (weights[j, 1] / sumWeights) * _numOfParams;
-            }
-            var test = weights.ColumnSums()[0] * weights.ColumnSums()[1];
+
+            weightsVect = weightsVect.Normalize(1).Multiply(_numOfParams * _numOfParams);
+
+            var test = weightsVect.Sum() == _numOfParams*_numOfParams?1:0;
+
             UpdateID();
         }
     }

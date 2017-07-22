@@ -5,12 +5,11 @@ using System.Threading.Tasks;
 using MathNet.Numerics.LinearAlgebra;
 using System.Data;
 
-// Looks like it is not a good method to use Entropy. So Sepetate each cover elment in evlovment
 namespace WeightEvolve
 {
     using CEPool = Dictionary<GAEncoding, double[]>;
     [Serializable]
-    class GA
+    class DE
     {
         private int gen = 0;
         int popSize = 500;
@@ -18,9 +17,7 @@ namespace WeightEvolve
         public CEPool cePool = null;
         public CEPool tempPool = null;
         public int maxGen = 200000;
-        public double pmCrossOverRate = 0.80;
         int pNumOfParams = 10;
-        int pPanCombSize = 2;
         int numOfLabel = 5;
         int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
@@ -31,7 +28,7 @@ namespace WeightEvolve
         DataTable dt = new DataTable();
         double[] cumulativeArray;
 
-        public GA()
+        public DE()
         {
             LabelMatrixCreation25();
             aMatrixCreation();
@@ -40,41 +37,54 @@ namespace WeightEvolve
         public void PopulationGen(int min, int max)
         {
             cePool.Clear();
+
+            //List<int> nonDominatedList = NonDomininatedSolution(tempPool);
+            tempPool.Where(x => x.Key.entropy == tempPool.Max(y => y.Key.entropy)).First().Key.rank = 0;
             for (int i = 0; i < popSize; i++)
             {
                 cePool.Add(
                     Copy.DeepCopy(tempPool.ElementAt(i).Key),
-                    new double[] { tempPool.ElementAt(i).Key.entropy, -1 }
+                    new double[] { tempPool.ElementAt(i).Key.entropy,
+                            tempPool.ElementAt(i).Key.diversity }
                 );
             }
             tempPool.Clear();
-            //double a = cePool.Max(x => x.Value[0]);
-            double minimumFitness = cePool.Values.Min(y => y[0]);
-            if (minimumFitness < 0)
+        }
+
+        public List<int> NonDomininatedSolution(CEPool pool)
+        {
+            int[] dominatedList = new int[pool.Count];
+            List<int> nonDominatedList = new List<int> ();
+
+            Array.Clear(dominatedList,0,dominatedList.Length-1);
+            for (int i = 0; i < dominatedList.Length; i++)
             {
-                for (int i = 0; i < cePool.Count; i++)
+                for (int j = 0; j < dominatedList.Length; j++)
                 {
-                    cePool.ElementAt(i).Value[0] += Math.Abs(minimumFitness);
+                    if (pool.ElementAt(i).Key.entropy == pool.ElementAt(j).Key.entropy
+                        && pool.ElementAt(i).Key.diversity ==
+                        pool.ElementAt(j).Key.diversity)
+                    {
+                        continue;
+                    }
+                    if (pool.ElementAt(i).Key.entropy <= pool.ElementAt(j).Key.entropy
+                        && pool.ElementAt(i).Key.diversity <=
+                        pool.ElementAt(j).Key.diversity)
+                    {
+                        dominatedList[i] += 1;
+                    }
                 }
             }
 
-            double sum = cePool.Values.Sum(x => x[0]);
-            if (Double.IsNaN(sum))
+            for (int i = 0; i < dominatedList.Length; i++)
             {
-                Console.WriteLine("N/A error of sum");
-            }
-            for (int i = 0; i < max - min + 1; i++)
-            {
-                cePool.ElementAt(i).Value[0] = cePool.ElementAt(i).Value[0] / sum;
-            }
-            Array.Clear(cumulativeArray, 0, cumulativeArray.Length);
-            double cumulation = 0.0;
-            for (int i = 0; i < popSize; i++)
-            {
-                cumulation = cumulation + cePool.ElementAt(i).Value[0];
-                cumulativeArray[i] = cumulation;
+                if (dominatedList[i] == 0)
+                {
+                    nonDominatedList.Add(i);
+                }
             }
 
+            return nonDominatedList;
         }
 
         public async void GA_FitnessEvaluation(int[] token)
@@ -135,7 +145,7 @@ namespace WeightEvolve
 
             for (int i = 0; i < solution.weightsVect.Count; i++)
             {
-                weight = weight + solution.weightsVect[i] + " " ;
+                weight = weight + solution.weightsVect[i] + " ";
             }
             weight.Remove(weight.Length - 1, 1);
 
@@ -145,14 +155,20 @@ namespace WeightEvolve
         void UpdateRecordAndDisplay()
         {
 
+
             Console.WriteLine("Generation: {0}", gen);
-            List<GAEncoding> currentBests = cePool.Where(x => x.Key.entropy == cePool.Max(y => y.Key.entropy))
+            List<GAEncoding> currentBests = cePool.Where(x => x.Key.rank == 0)
                 .Select(x => x.Key).ToList();
 
-            for (int i = 0; i < currentBests.Count; i++)
-            {
-                Console.WriteLine("Solution: {1}, Entropy: {0}", currentBests[i].entropy, i);
-            }
+            //for (int i = 0; i < currentBests.Count; i++)
+            //{
+            //    Console.WriteLine("Solution: {1}, Entropy: {0}", currentBests[i].entropy, i);
+            //    Console.WriteLine("Solution: {1}, Diversity: {0}", currentBests[i].diversity, i);
+            //}
+            Console.WriteLine("Max_Entropy: {0}", currentBests.Where(x=>x.entropy == currentBests
+                            .Max(y=>y.entropy)).First().entropy);
+            Console.WriteLine("Max_Diversity: {0}", currentBests.Where(x => x.diversity == currentBests
+                            .Max(y => y.diversity)).First().diversity);
             var a = currentBests[0].weightsVect.Sum();
             var solutions = Print_Solution(currentBests[0]);
 
@@ -168,7 +184,7 @@ namespace WeightEvolve
             int fake = 0;
             if (fake > 0)
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dt},false,
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dt }, false,
                     @"C:\Users\shiya\Desktop\record\a.xlsx");
             }
         }
@@ -190,36 +206,23 @@ namespace WeightEvolve
                 }
             }
         }
-        public void GA_Start()
+        public void DE_Start()
         {
             int[] token = new int[1];
             Console.WriteLine("In Fitness Evaluation...");
             GA_FitnessEvaluation(token);
-            while (token[0] == 0) ;
+            while (token[0] == 0);
             token[0] = 0;
             PopulationGen(0, popSize - 1); //tmpPool -> cePool
             UpdateRecordAndDisplay();
 
-
-            // Start MOGA
             while (gen < maxGen)
             {
                 gen = gen + 1;
                 Reproduction(token);
                 while (token[0] == 0) ;
                 token[0] = 0;
-                GA_FitnessEvaluation(token);
-                if (cePool.Count < 100)
-                {
-                    Console.WriteLine("EEE");
-                }
-                while (token[0] == 0) ;
-                token[0] = 0;
                 PopulationGen(0, popSize - 1);
-                if (cePool.Count < 100)
-                {
-                    Console.WriteLine("VVV");
-                }
                 UpdateRecordAndDisplay();
                 if (ceDB.Count < numOfNNLocalSearch)
                 {
@@ -255,42 +258,38 @@ namespace WeightEvolve
         public async void Reproduction(int[] token)
         {
             int maxNumOfTasks = 20;
-            GAEncoding child = new GAEncoding(pNumOfParams, dimension, lowbounds, highbounds);
             int k = 0;
-            var rankOneSol = cePool.Where(x => x.Value[0] == cePool.Max(y => y.Value[0])).First();
-            tempPool.Add(Copy.DeepCopy(rankOneSol.Key), rankOneSol.Value);
 
             List<Task> lTasks = new List<Task>();
-
-            if (cePool.Count < 100)
-            {
-                Console.WriteLine("RRRRRR");
-            }
 
             while (tempPool.Count < popSize)
             {
                 lTasks.Add(Task.Run(() =>
                 {
-                    int[] selectedList = FitnessPropotionateSampling(pPanCombSize);
-                    child = Copy.DeepCopy(cePool.ElementAt(selectedList[0]).Key);
-                    if (GlobalVar.rnd.NextDouble() <= pmCrossOverRate)
+                    GlobalVar.mutex_K.WaitOne();
+                    int index = k;
+                    k = k + 1;
+                    GlobalVar.mutex_K.ReleaseMutex();
+                    GAEncoding child = Copy.DeepCopy(cePool.ElementAt(index).Key);
+                    int[] selectedList = DifferentialSelection(index);
+                    child = child.DifferentialCrossover(cePool,selectedList);
+
+                    child.FitnessCal(aMatrix);
+                    if (child.entropy > cePool.ElementAt(index).Key.entropy
+                        /*&& child.diversity > cePool.ElementAt(index).Key.diversity*/)
                     {
-                        if (cePool.Count < 100)
-                        {
-                            Console.WriteLine();
-                        }
-
-                        child = cePool.ElementAt(0).Key.IntermidinateRecomb(cePool, selectedList);
-                        child = child.RealVectMutation();
                         GlobalVar.mutex_K.WaitOne();
-                        if (!tempPool.ContainsKey(child))
-                        {
-
-                            tempPool.Add(child, new double[] { -1, -1 });
-                            k = k + 1;
-                        }
+                        tempPool.Add(child, new double[] { child.entropy, -1 });
                         GlobalVar.mutex_K.ReleaseMutex();
                     }
+                    else
+                    {
+                        GlobalVar.mutex_K.WaitOne();
+                        tempPool.Add(cePool.ElementAt(index).Key,
+                            new double[] { cePool.ElementAt(index).Key.entropy, -1 });
+                        GlobalVar.mutex_K.ReleaseMutex();
+                    }
+
                 }));
 
                 if (lTasks.Count == maxNumOfTasks)
@@ -311,50 +310,27 @@ namespace WeightEvolve
             token[0] = 1;
         }
 
-        private int[] FitnessPropotionateSampling(int size)
+        //Select 3 individuals that is distinct from each other, and from index
+        private int[] DifferentialSelection(int index)
         {
-            int[] result = new int[size];
-            for (int i = 0; i < size; i++)
+            int success = 0;
+            int a=-1, b=-1, c=-1;
+            while (success == 0)
             {
-                result[i] = -1;
-            }
+                a = GlobalVar.rnd.Next(0, popSize-1);
+                b = GlobalVar.rnd.Next(0, popSize - 1);
+                c = GlobalVar.rnd.Next(0, popSize - 1);
 
-            int timerCount = 0;
-            int tmpCnt = 0;
-            while (true)
-            {
-                if (tmpCnt == size)
+                if (!(index == a || index == b
+                    || index == c || a == b
+                    || a == c || b == c))
                 {
-                    break;
-                }
-                double nextRnd = GlobalVar.rnd.NextDouble();
-                int selectIndex = 0;
-                for (int i = 0; i < cumulativeArray.Length; i++)
-                {
-                    if (nextRnd < cumulativeArray[i])
-                    {
-                        selectIndex = i;
-                        break;
-                    }
-                }
-                if (result.Where(x => x == selectIndex).Count() == 0)
-                {
-                    result[tmpCnt] = selectIndex;
-                    tmpCnt = tmpCnt + 1;
-                }
-                timerCount += 1;
-                if (timerCount == 1000)
-                {
-                    Console.WriteLine("Selection Reach 100.");
-                    for (int i = 0; i < size; i++)
-                    {
-                        result[i] = i;
-                    }
-                    break;
+                    success = 1;
                 }
             }
-            return result;
+            return new int[] {a,b,c };
         }
+
         public void LabelMatrixCreation()
         {
             labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
@@ -553,10 +529,10 @@ namespace WeightEvolve
                 for (int j = 0; j < pNumOfParams; j++)
                 {
                     Vector<double> xVect = delta.PointwiseMultiply(
-                        Vector<double>.Build.Dense(new double[] {(j+1),(i+1)}));
+                        Vector<double>.Build.Dense(new double[] { (j + 1), (i + 1) }));
                     var indToLabelM = xVect.PointwiseRound();
                     int label = (int)labelMatrix.At((int)indToLabelM[0], (int)indToLabelM[1]);
-                    aMatrix[i* pNumOfParams + j, label-1] += 1;
+                    aMatrix[i * pNumOfParams + j, label - 1] += 1;
                 }
             }
             var a = aMatrix.ColumnSums();
@@ -564,7 +540,7 @@ namespace WeightEvolve
         }
         public void LabelMatrixCreation25()
         {
-            labelMatrix = Matrix<double>.Build.Dense((int) (highbounds[0] - lowbounds[0] + 1),
+            labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
                 (int)(highbounds[1] - lowbounds[1] + 1));
 
 
@@ -588,9 +564,9 @@ namespace WeightEvolve
             labelMatrix[3, 1] = 1;
             labelMatrix[3, 2] = 1;
             labelMatrix[10, 10] = 2;
-            //labelMatrix[10, 20] = 2;
-            //labelMatrix[10, 30] = 2;
-            //labelMatrix[10, 40] = 2;
+            labelMatrix[10, 20] = 2;
+            labelMatrix[10, 30] = 2;
+            labelMatrix[10, 40] = 2;
             //labelMatrix[20, 10] = 3;
             labelMatrix[20, 20] = 3;
             //labelMatrix[20, 30] = 3;
@@ -603,7 +579,7 @@ namespace WeightEvolve
             //labelMatrix[40, 20] = 5;
             //labelMatrix[40, 30] = 5;
             labelMatrix[40, 40] = 5;
-            labelMatrix[4, 2] = 1;
+            //labelMatrix[50, 50] = 1;
             labelMatrix[4, 3] = 1;
             labelMatrix[4, 4] = 1;
             labelMatrix[4, 5] = 1;
