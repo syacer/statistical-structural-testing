@@ -15,6 +15,14 @@ namespace WeightEvolve
             (() => new Random(Interlocked.Increment(ref seed)));
         public static Random rnd { get { return threadLocal.Value; } }
     }
+    public class shareData
+    {
+        public double fitness;
+        public bool update;
+        public int generation;
+        public string strbuf;
+    }
+
     static class Program
     {
         /// <summary>

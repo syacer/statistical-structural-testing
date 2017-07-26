@@ -7,18 +7,22 @@ using System.Data;
 
 namespace WeightEvolve
 {
+    using System.IO;
+    using System.Threading;
     using CEPool = Dictionary<GAEncoding, double[]>;
     [Serializable]
     class DE
     {
+        private shareData _data;
         private int gen = 0;
+        int totalSamples = 1000;
         int popSize = 500;
         public int dimension = 2;
         public CEPool cePool = null;
         public CEPool tempPool = null;
         public int maxGen = 200000;
         int pNumOfParams = 10;
-        int numOfLabel = 5;
+        int numOfLabel = 40;
         int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
         double[] highbounds = new double[] { 100, 100 };
@@ -27,13 +31,20 @@ namespace WeightEvolve
         public CEPool ceDB = null;
         DataTable dt = new DataTable();
         double[] cumulativeArray;
+        List<Vector<double>>[] trainingVects;
 
-        public DE()
+        public DE(shareData data)
         {
-            LabelMatrixCreation25();
-            aMatrixCreation();
-            GA_Initialization();
+            _data = data;
         }
+
+        public void LabelPrepration()
+        {
+            LabelMatrixCreationA();
+            LabelStoreToFile();
+            LabelStoreToExcel();
+        }
+
         public void PopulationGen(int min, int max)
         {
             cePool.Clear();
@@ -169,6 +180,13 @@ namespace WeightEvolve
                             .Max(y=>y.entropy)).First().entropy);
             Console.WriteLine("Max_Diversity: {0}", currentBests.Where(x => x.diversity == currentBests
                             .Max(y => y.diversity)).First().diversity);
+
+            _data.fitness = currentBests.Where(x => x.entropy == currentBests
+                            .Max(y => y.entropy)).First().entropy;
+            _data.generation = gen;
+            _data.strbuf = "Fitness: " + _data.fitness.ToString();
+            _data.update = true;
+
             var a = currentBests[0].weightsVect.Sum();
             var solutions = Print_Solution(currentBests[0]);
 
@@ -208,6 +226,7 @@ namespace WeightEvolve
         }
         public void DE_Start()
         {
+            DE_Initialization();
             int[] token = new int[1];
             Console.WriteLine("In Fitness Evaluation...");
             GA_FitnessEvaluation(token);
@@ -236,13 +255,18 @@ namespace WeightEvolve
             }
         }
 
-        private void GA_Initialization()
+        private void DE_Initialization()
         {
             cePool = new CEPool();
             tempPool = new CEPool();
             ceDB = new CEPool();
             cumulativeArray = new double[popSize];
             Console.BackgroundColor = ConsoleColor.Yellow;
+
+            LabelRetrive();
+            RandomSampleOfBlocks();
+            aMatrixCreation();
+
             for (int i = 0; i < popSize; i++)
             {
                 var newSolution = new GAEncoding(pNumOfParams, dimension, lowbounds, highbounds);
@@ -331,196 +355,9 @@ namespace WeightEvolve
             return new int[] {a,b,c };
         }
 
-        public void LabelMatrixCreation()
+        public void RandomSampleOfBlocks()
         {
-            labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
-                (int)(highbounds[1] - lowbounds[1] + 1));
-            aMatrix = Matrix<double>.Build.Dense((int)Math.Pow(pNumOfParams, 2), numOfLabel);
-
-            for (int i = 0; i < (int)(highbounds[0] - lowbounds[0] + 1); i++)
-            {
-                for (int j = 0; j < (int)(highbounds[1] - lowbounds[1] + 1); j++)
-                {
-                    if (i <= 2)
-                    {
-                        if (j <= 1)
-                        {
-                            labelMatrix[i, j] = 1;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 4)
-                        {
-                            labelMatrix[i, j] = 8;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 8)
-                        {
-                            labelMatrix[i, j] = 3;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 40)
-                        {
-                            labelMatrix[i, j] = 8;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 50)
-                        {
-                            labelMatrix[i, j] = 9;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                    }
-                    else if (i <= 4)
-                    {
-                        if (j <= 1)
-                        {
-                            labelMatrix[i, j] = 5;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 4)
-                        {
-                            labelMatrix[i, j] = 4;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 8)
-                        {
-                            labelMatrix[i, j] = 2;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 40)
-                        {
-                            labelMatrix[i, j] = 2;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 50)
-                        {
-                            labelMatrix[i, j] = 10;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                    }
-                    else if (i <= 49)
-                    {
-                        if (j <= 1)
-                        {
-                            labelMatrix[i, j] = 6;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 4)
-                        {
-                            labelMatrix[i, j] = 3;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 8)
-                        {
-                            labelMatrix[i, j] = 2;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 40)
-                        {
-                            labelMatrix[i, j] = 2;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 50)
-                        {
-                            labelMatrix[i, j] = 9;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                    }
-                    else if (i <= 50)
-                    {
-                        if (j <= 1)
-                        {
-                            labelMatrix[i, j] = 7;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 4)
-                        {
-                            labelMatrix[i, j] = 6;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 8)
-                        {
-                            labelMatrix[i, j] = 7;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 40)
-                        {
-                            labelMatrix[i, j] = 1;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                        else if (j <= 50)
-                        {
-                            labelMatrix[i, j] = 10;
-                            int ti = i % pNumOfParams;
-                            int tj = j % pNumOfParams;
-                            int aIndex = tj * pNumOfParams + ti;
-                            aMatrix[aIndex, (int)labelMatrix[i, j] - 1] += 1;
-                        }
-                    }
-                }
-            }
-            aMatrix = aMatrix.NormalizeRows(2.0);
-        }
-        public void aMatrixCreation()
-        {
-            aMatrix = Matrix<double>.Build.Dense((int)Math.Pow(pNumOfParams, 2), numOfLabel);
-
+            trainingVects = new List<Vector<double>>[pNumOfParams * pNumOfParams];
             Vector<double> delta = (Vector<double>.Build.Dense(highbounds)
                 - Vector<double>.Build.Dense(lowbounds)).Divide(pNumOfParams);
 
@@ -530,64 +367,199 @@ namespace WeightEvolve
                 {
                     Vector<double> xVect = delta.PointwiseMultiply(
                         Vector<double>.Build.Dense(new double[] { (j + 1), (i + 1) }));
-                    var indToLabelM = xVect.PointwiseRound();
-                    int label = (int)labelMatrix.At((int)indToLabelM[0], (int)indToLabelM[1]);
-                    aMatrix[i * pNumOfParams + j, label - 1] += 1;
+                    int numOfSamples = totalSamples/(pNumOfParams*pNumOfParams);
+                    List<Vector<double>> trainingVectsOfBlock = new List<Vector<double>>();
+                    while (trainingVectsOfBlock.Count != numOfSamples)
+                    {
+                        int x1 = GlobalVar.rnd.Next((int)(xVect[0] - delta[0]), (int)xVect[0]);
+                        int x2 = GlobalVar.rnd.Next((int)(xVect[1] - delta[1]), (int)xVect[1]);
+                        int label = (int)labelMatrix.At(x1, x2);
+                        Vector<double> rxVect = Vector<double>.Build.Dense(
+                            new double[] {x1, x2, label});
+
+                        if (!trainingVectsOfBlock.Contains(rxVect))
+                        {
+                            trainingVectsOfBlock.Add(rxVect);
+                        }
+                    }
+                    trainingVects[i * pNumOfParams + j] = trainingVectsOfBlock;
                 }
             }
-            var a = aMatrix.ColumnSums();
+        }
+
+        public void aMatrixCreation()
+        {
+            aMatrix = Matrix<double>.Build.Dense((int)Math.Pow(pNumOfParams, 2), numOfLabel);
+            for (int i = 0; i < trainingVects.Length; i++)
+            {
+                var xVects = trainingVects[i];
+                for (int j = 0; j < xVects.Count; j++)
+                {
+                    aMatrix[i, (int)xVects[j][2]-1] += 1;
+                }
+            }
+
+            Vector<double> sumRows = aMatrix.RowSums();
+            for (int i = 0; i < sumRows.Count; i++)
+            {
+                var tempRowVect = aMatrix.Row(i);
+                tempRowVect = tempRowVect.Divide(sumRows[i]);
+                aMatrix.SetRow(i,tempRowVect);
+            }
+        }
+
+        public void LabelStoreToFile()
+        {
+            LocalFileAccess lfa = new LocalFileAccess();
+            if (File.Exists(@"C:\Users\shiya\Desktop\record\LabelMatrix"))
+            {
+                File.Delete(@"C:\Users\shiya\Desktop\record\LabelMatrix");
+            }
+            File.Create(@"C:\Users\shiya\Desktop\record\LabelMatrix").Close();
+            for (int i = 0; i < labelMatrix.RowCount; i++)
+            {
+                List<string> rowList = labelMatrix.Row(i).ToList().Select(x => x.ToString()).ToList();
+                lfa.StoreListToLinesAppend(@"C:\Users\shiya\Desktop\record\LabelMatrix",rowList);
+            }
 
         }
-        public void LabelMatrixCreation25()
+
+        public void LabelRetrive()
+        {
+            if (!File.Exists(@"C:\Users\shiya\Desktop\record\LabelMatrix"))
+            {
+                Console.WriteLine("NOT EXISTS");
+            }
+
+            LocalFileAccess lfa = new LocalFileAccess();
+            List<string> rowList = new List<string>();
+            lfa.StoreLinesToList(@"C:\Users\shiya\Desktop\record\LabelMatrix", rowList);
+
+            labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
+                (int)(highbounds[1] - lowbounds[1] + 1));
+            for (int i = 0; i < labelMatrix.RowCount; i++)
+            {
+                for (int j = 0; j < labelMatrix.ColumnCount; j++)
+                {
+                    labelMatrix[i, j] = Convert.ToDouble(rowList[i * labelMatrix.ColumnCount + j]);
+                }
+            }
+        }
+        public void LabelStoreToExcel()
+        {
+            DataTable labelDt = new DataTable();
+
+            for (int i = 0; i < highbounds[0]-lowbounds[0] + 1; i++)
+            {
+                labelDt.Columns.Add(i.ToString(), Type.GetType("System.Double"));
+            }
+
+            for (int i = 0; i < labelMatrix.RowCount; i++)
+            {
+                var row = labelDt.NewRow();
+                row.ItemArray = labelMatrix.Row(labelMatrix.RowCount - i - 1).Select(x=>(object)x).ToArray();
+                labelDt.Rows.Add(row);
+            }
+
+            if (File.Exists(@"C:\Users\shiya\Desktop\record\label.xlsx"))
+            {
+                File.Delete(@"C:\Users\shiya\Desktop\record\label.xlsx");
+            }
+            File.Create(@"C:\Users\shiya\Desktop\record\label.xlsx").Close();
+            ExcelOperation.dataTableListToExcel(new List<DataTable>() { labelDt }, false,
+                @"C:\Users\shiya\Desktop\record\label.xlsx");
+
+            _data.strbuf = "Finish Write Labels to Excel";
+            _data.update = true;
+        }
+        //A: Each block has only one label
+        public void LabelMatrixCreationA()
         {
             labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
                 (int)(highbounds[1] - lowbounds[1] + 1));
+            Vector<double> delta = (Vector<double>.Build.Dense(highbounds)
+                   - Vector<double>.Build.Dense(lowbounds)).Divide(pNumOfParams);
 
+            double[] labelPercentArray = new double[numOfLabel];
+            ManuallyAssignPercent(labelPercentArray);
 
-            for (int i = 0; i < (int)(highbounds[0] - lowbounds[0] + 1); i++)
+            for (int i = 0; i < numOfLabel; i++)
             {
-                for (int j = 0; j < (int)(highbounds[1] - lowbounds[1] + 1); j++)
+                int count = 0;
+
+                while (count < (int)(labelPercentArray[i] * pNumOfParams * pNumOfParams))
                 {
-                    labelMatrix[i, j] = 1;
+                    _data.update = true;
+                    _data.strbuf = "Label: #" + (i + 1).ToString() + " Count: #" + count.ToString();
+                    int iIndx = GlobalVar.rnd.Next(0,pNumOfParams);
+                    int jIndx = GlobalVar.rnd.Next(0, pNumOfParams);
+                    int iLabelIndx = (int)(iIndx * delta[0] + delta[0]);
+                    int jLabelIndx = (int)(jIndx * delta[1] + delta[1]);
+
+                    if (labelMatrix[iLabelIndx, jLabelIndx] == 0)
+                    {
+                        int maxj = jIndx == 0 ? (int)delta[1] + 1 : (int)delta[1];
+                        int maxk = iIndx == 0 ? (int)delta[0] + 1 : (int)delta[0];
+
+                        for (int j = 0; j < maxj; j++)
+                        {
+                            for (int k = 0; k < maxk; k++)
+                            {
+                                labelMatrix[iLabelIndx - k, jLabelIndx - j] = i + 1;
+                            }
+                        }
+                        count += 1;
+                    }
+
                 }
             }
-            labelMatrix[1, 1] = 1;
-            labelMatrix[1, 2] = 1;
-            labelMatrix[1, 3] = 1;
-            labelMatrix[1, 4] = 1;
-            labelMatrix[1, 5] = 1;
-            labelMatrix[2, 1] = 1;
-            labelMatrix[2, 2] = 1;
-            labelMatrix[2, 3] = 4;
-            labelMatrix[2, 4] = 4;
-            labelMatrix[2, 5] = 4;
-            labelMatrix[3, 1] = 1;
-            labelMatrix[3, 2] = 1;
-            labelMatrix[10, 10] = 2;
-            labelMatrix[10, 20] = 2;
-            labelMatrix[10, 30] = 2;
-            labelMatrix[10, 40] = 2;
-            //labelMatrix[20, 10] = 3;
-            labelMatrix[20, 20] = 3;
-            //labelMatrix[20, 30] = 3;
-            //labelMatrix[20, 40] = 3;
-            //labelMatrix[30, 10] = 4;
-            //labelMatrix[30, 20] = 4;
-            labelMatrix[30, 30] = 4;
-            //labelMatrix[30, 40] = 4;
-            //labelMatrix[40, 10] = 5;
-            //labelMatrix[40, 20] = 5;
-            //labelMatrix[40, 30] = 5;
-            labelMatrix[40, 40] = 5;
-            //labelMatrix[50, 50] = 1;
-            labelMatrix[4, 3] = 1;
-            labelMatrix[4, 4] = 1;
-            labelMatrix[4, 5] = 1;
-            labelMatrix[5, 1] = 1;
-            labelMatrix[5, 2] = 2;
-            labelMatrix[5, 3] = 1;
-            labelMatrix[5, 4] = 1;
-            labelMatrix[5, 5] = 5;
+            int checkPoint = (int)labelMatrix.ColumnSums().Sum();
+        }
+
+        private void ManuallyAssignPercent(double[] labelPercentArray)
+        {
+            labelPercentArray[0] = 0.01;
+            labelPercentArray[1] = 0.01;
+            labelPercentArray[2] = 0.01;
+            labelPercentArray[3] = 0.01;
+            labelPercentArray[4] = 0.01;
+            labelPercentArray[5] = 0.01;
+            labelPercentArray[6] = 0.01;
+            labelPercentArray[7] = 0.01;
+            labelPercentArray[8] = 0.01;
+            labelPercentArray[9] = 0.01;
+            labelPercentArray[10] = 0.01;
+            labelPercentArray[11] = 0.01;
+            labelPercentArray[12] = 0.01;
+            labelPercentArray[13] = 0.01;
+            labelPercentArray[14] = 0.01;
+            labelPercentArray[15] = 0.01;
+            labelPercentArray[16] = 0.01;
+            labelPercentArray[17] = 0.01;
+            labelPercentArray[18] = 0.01;
+            labelPercentArray[19] = 0.01;
+            labelPercentArray[20] = 0.03;
+            labelPercentArray[21] = 0.02;
+            labelPercentArray[22] = 0.05;
+            labelPercentArray[23] = 0.10;
+            labelPercentArray[24] = 0.04;
+            labelPercentArray[25] = 0.02;
+            labelPercentArray[26] = 0.03;
+            labelPercentArray[27] = 0.01;
+            labelPercentArray[28] = 0.20;
+            labelPercentArray[29] = 0.05;
+            labelPercentArray[30] = 0.02;
+            labelPercentArray[31] = 0.02;
+            labelPercentArray[32] = 0.08;
+            labelPercentArray[33] = 0.01;
+            labelPercentArray[34] = 0.02;
+            labelPercentArray[35] = 0.03;
+            labelPercentArray[36] = 0.01;
+            labelPercentArray[37] = 0.01;
+            labelPercentArray[38] = 0.03;
+            labelPercentArray[39] = 0.02;
+
+            var checkSum = labelPercentArray.Sum();
         }
     }
 }
