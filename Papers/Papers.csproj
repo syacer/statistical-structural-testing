@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F706ED27-ADB5-4185-8086-54BAFF7416C1}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Papers</RootNamespace>
+    <AssemblyName>Papers</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="CACO\caco.synctex.gz" />
+    <None Include="CACO\caco.tex" />
+    <None Include="CACO\diagrams\ACO.vsdx" />
+    <None Include="CACO\diagrams\Bin.vsdx" />
+    <None Include="CACO\diagrams\OverFlow.vsdx" />
+    <None Include="CACO\diagrams\simplefunc.vsdx" />
+    <None Include="PathCoverageEntropy\StatisticalTesting.synctex.gz" />
+    <None Include="PathCoverageEntropy\StatisticalTesting.tex" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="CACO\diagrams\ACO.png" />
+    <Content Include="CACO\diagrams\Bin.png" />
+    <Content Include="CACO\diagrams\box-bestMove.PNG" />
+    <Content Include="CACO\diagrams\box-gcd.PNG" />
+    <Content Include="CACO\diagrams\CACOVSOTHER.PNG" />
+    <Content Include="CACO\diagrams\FinalFit.PNG" />
+    <Content Include="CACO\diagrams\FitnessPerCE.PNG" />
+    <Content Include="CACO\diagrams\GMM.py" />
+    <Content Include="CACO\diagrams\Increase.PNG" />
+    <Content Include="CACO\diagrams\OverallFlow.png" />
+    <Content Include="CACO\diagrams\simplefunc.png" />
+    <Content Include="CACO\diagrams\solutionEncoding.png" />
+    <Content Include="CACO\diagrams\TruncatedGMM.png" />
+    <Content Include="CACO\IEEEtran.cls" />
+    <Content Include="PathCoverageEntropy\IEEEtran.cls" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

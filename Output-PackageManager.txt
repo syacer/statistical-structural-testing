@@ -1,0 +1,17 @@
+﻿Attempting to gather dependency information for package 'Accord.MachineLearning.3.6.0' with respect to project 'WeightEvolve', targeting '.NETFramework,Version=v4.5.2'
+Attempting to resolve dependencies for package 'Accord.MachineLearning.3.6.0' with DependencyBehavior 'Lowest'
+Resolving actions to install package 'Accord.MachineLearning.3.6.0'
+Resolved actions to install package 'Accord.MachineLearning.3.6.0'
+Package 'Accord.3.6.0' already exists in folder 'D:\PhDWorks\StatisticalTesting\DeterministicApproach-GA\packages'
+Added package 'Accord.3.6.0' to 'packages.config'
+Successfully installed 'Accord 3.6.0' to WeightEvolve
+Package 'Accord.Math.3.6.0' already exists in folder 'D:\PhDWorks\StatisticalTesting\DeterministicApproach-GA\packages'
+Added package 'Accord.Math.3.6.0' to 'packages.config'
+Successfully installed 'Accord.Math 3.6.0' to WeightEvolve
+Package 'Accord.Statistics.3.6.0' already exists in folder 'D:\PhDWorks\StatisticalTesting\DeterministicApproach-GA\packages'
+Added package 'Accord.Statistics.3.6.0' to 'packages.config'
+Successfully installed 'Accord.Statistics 3.6.0' to WeightEvolve
+Package 'Accord.MachineLearning.3.6.0' already exists in folder 'D:\PhDWorks\StatisticalTesting\DeterministicApproach-GA\packages'
+Added package 'Accord.MachineLearning.3.6.0' to 'packages.config'
+Successfully installed 'Accord.MachineLearning 3.6.0' to WeightEvolve
+========== Finished ==========

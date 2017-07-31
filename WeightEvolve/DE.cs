@@ -7,22 +7,24 @@ using System.Data;
 
 namespace WeightEvolve
 {
+    using Accord.MachineLearning.DecisionTrees;
+    using Accord.MachineLearning.DecisionTrees.Learning;
+    using Accord.Math.Optimization.Losses;
     using System.IO;
-    using System.Threading;
     using CEPool = Dictionary<GAEncoding, double[]>;
     [Serializable]
     class DE
     {
         private shareData _data;
         private int gen = 0;
-        int totalSamples = 1000;
+        int totalSamples = 2000;
         int popSize = 500;
         public int dimension = 2;
         public CEPool cePool = null;
         public CEPool tempPool = null;
         public int maxGen = 200000;
         int pNumOfParams = 10;
-        int numOfLabel = 40;
+        int numOfLabel = 2;
         int numOfNNLocalSearch = 0;
         double[] lowbounds = new double[] { 0.0, 0.0 };
         double[] highbounds = new double[] { 100, 100 };
@@ -254,7 +256,45 @@ namespace WeightEvolve
                 }
             }
         }
+        private void ParameterLearning()
+        {
+            int[][] inputs = new int[trainingVects.Length*trainingVects[0].Count][];
+            int[] outputs = new int[trainingVects.Length * trainingVects[0].Count];
+            for (int i = 0; i < trainingVects.Length; i++)
+            {
+                for (int j = 0; j < trainingVects[i].Count; j++)
+                {
+                    inputs[i*trainingVects[i].Count+j] = new int[] {
+                        (int)trainingVects[i][j][0],
+                        (int)trainingVects[i][j][1]
+                    };
+                    outputs[i * trainingVects[i].Count + j] = (int)trainingVects[i][j][2] - 1;
+                }
+            }
 
+            // Create an ID3 learning algorithm
+            C45Learning teacher = new C45Learning();
+            DecisionVariable var1 = new DecisionVariable("A", new Accord.DoubleRange(0, 100));
+            DecisionVariable var2 = new DecisionVariable("B", new Accord.DoubleRange(0, 100));
+            var1.Nature = DecisionVariableKind.Continuous;
+            var2.Nature = DecisionVariableKind.Continuous;
+            teacher.Attributes.Add(var1);
+            teacher.Attributes.Add(var2);
+            var tree = teacher.Learn(inputs, outputs);
+
+            var r = tree.ToRules();
+            for (int i = 0; i < r.Count; i++)
+            {
+                double o = r.ElementAt(i).Output;
+                string name1 = r.ElementAt(i).Variables.ElementAt(0).Name;
+                string name2 = r.ElementAt(i).Variables.ElementAt(1).Name;
+            }
+            double error = new ZeroOneLoss(outputs).Loss(tree.Decide(inputs));
+            int[] predicted = tree.Decide(inputs);
+            int[][] inputs2 = new int[1][];
+            inputs2[0] = new int[2] { 80, 81 };
+            var tmp = tree.Decide(inputs2);
+        }
         private void DE_Initialization()
         {
             cePool = new CEPool();
@@ -265,6 +305,7 @@ namespace WeightEvolve
 
             LabelRetrive();
             RandomSampleOfBlocks();
+            ParameterLearning();
             aMatrixCreation();
 
             for (int i = 0; i < popSize; i++)
@@ -369,7 +410,7 @@ namespace WeightEvolve
                         Vector<double>.Build.Dense(new double[] { (j + 1), (i + 1) }));
                     int numOfSamples = totalSamples/(pNumOfParams*pNumOfParams);
                     List<Vector<double>> trainingVectsOfBlock = new List<Vector<double>>();
-                    while (trainingVectsOfBlock.Count != numOfSamples)
+                    while (trainingVectsOfBlock.Count < numOfSamples)
                     {
                         int x1 = GlobalVar.rnd.Next((int)(xVect[0] - delta[0]), (int)xVect[0]);
                         int x2 = GlobalVar.rnd.Next((int)(xVect[1] - delta[1]), (int)xVect[1]);
@@ -518,48 +559,48 @@ namespace WeightEvolve
 
         private void ManuallyAssignPercent(double[] labelPercentArray)
         {
-            labelPercentArray[0] = 0.01;
-            labelPercentArray[1] = 0.01;
-            labelPercentArray[2] = 0.01;
-            labelPercentArray[3] = 0.01;
-            labelPercentArray[4] = 0.01;
-            labelPercentArray[5] = 0.01;
-            labelPercentArray[6] = 0.01;
-            labelPercentArray[7] = 0.01;
-            labelPercentArray[8] = 0.01;
-            labelPercentArray[9] = 0.01;
-            labelPercentArray[10] = 0.01;
-            labelPercentArray[11] = 0.01;
-            labelPercentArray[12] = 0.01;
-            labelPercentArray[13] = 0.01;
-            labelPercentArray[14] = 0.01;
-            labelPercentArray[15] = 0.01;
-            labelPercentArray[16] = 0.01;
-            labelPercentArray[17] = 0.01;
-            labelPercentArray[18] = 0.01;
-            labelPercentArray[19] = 0.01;
-            labelPercentArray[20] = 0.03;
-            labelPercentArray[21] = 0.02;
-            labelPercentArray[22] = 0.05;
-            labelPercentArray[23] = 0.10;
-            labelPercentArray[24] = 0.04;
-            labelPercentArray[25] = 0.02;
-            labelPercentArray[26] = 0.03;
-            labelPercentArray[27] = 0.01;
-            labelPercentArray[28] = 0.20;
-            labelPercentArray[29] = 0.05;
-            labelPercentArray[30] = 0.02;
-            labelPercentArray[31] = 0.02;
-            labelPercentArray[32] = 0.08;
-            labelPercentArray[33] = 0.01;
-            labelPercentArray[34] = 0.02;
-            labelPercentArray[35] = 0.03;
-            labelPercentArray[36] = 0.01;
-            labelPercentArray[37] = 0.01;
-            labelPercentArray[38] = 0.03;
-            labelPercentArray[39] = 0.02;
+            labelPercentArray[0] = 0.5;
+            labelPercentArray[1] = 0.5;
+            //labelPercentArray[2] = 0.01;
+            //labelPercentArray[3] = 0.01;
+            //labelPercentArray[4] = 0.01;
+            //labelPercentArray[5] = 0.01;
+            //labelPercentArray[6] = 0.01;
+            //labelPercentArray[7] = 0.01;
+            //labelPercentArray[8] = 0.01;
+            //labelPercentArray[9] = 0.01;
+            //labelPercentArray[10] = 0.01;
+            //labelPercentArray[11] = 0.01;
+            //labelPercentArray[12] = 0.01;
+            //labelPercentArray[13] = 0.01;
+            //labelPercentArray[14] = 0.01;
+            //labelPercentArray[15] = 0.01;
+            //labelPercentArray[16] = 0.01;
+            //labelPercentArray[17] = 0.01;
+            //labelPercentArray[18] = 0.01;
+            //labelPercentArray[19] = 0.01;
+            //labelPercentArray[20] = 0.03;
+            //labelPercentArray[21] = 0.02;
+            //labelPercentArray[22] = 0.05;
+            //labelPercentArray[23] = 0.10;
+            //labelPercentArray[24] = 0.04;
+            //labelPercentArray[25] = 0.02;
+            //labelPercentArray[26] = 0.03;
+            //labelPercentArray[27] = 0.01;
+            //labelPercentArray[28] = 0.20;
+            //labelPercentArray[29] = 0.05;
+            //labelPercentArray[30] = 0.02;
+            //labelPercentArray[31] = 0.02;
+            //labelPercentArray[32] = 0.08;
+            //labelPercentArray[33] = 0.01;
+            //labelPercentArray[34] = 0.02;
+            //labelPercentArray[35] = 0.03;
+            //labelPercentArray[36] = 0.01;
+            //labelPercentArray[37] = 0.01;
+            //labelPercentArray[38] = 0.03;
+            //labelPercentArray[39] = 0.02;
 
-            var checkSum = labelPercentArray.Sum();
+            //var checkSum = labelPercentArray.Sum();
         }
     }
 }
