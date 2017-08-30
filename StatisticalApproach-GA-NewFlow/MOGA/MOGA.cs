@@ -83,44 +83,6 @@ namespace StatisticalApproach.MOGA
             //}
             tempPool.Clear();
         }
-        public void PolyRegression()
-        {
-
-            double[,] data;
-
-            // Let's retrieve the input and output data:
-            double[] inputs = data.GetColumn(0);  // X
-            double[] outputs = data.GetColumn(1); // Y
-
-            // We can create a learning algorithm
-            var ls = new PolynomialLeastSquares()
-            {
-                Degree = 2
-            };
-
-            // Now, we can use the algorithm to learn a polynomial
-            PolynomialRegression poly = ls.Learn(inputs, outputs);
-
-            // The learned polynomial will be given by
-            string str = poly.ToString("N1"); // "y(x) = 1.0x^2 + 0.0x^1 + 0.0"
-
-            // Where its weights can be accessed using
-            double[] weights = poly.Weights;   // { 1.0000000000000024, -1.2407665029287351E-13 }
-            double intercept = poly.Intercept; // 1.5652369518855253E-12
-
-            // Finally, we can use this polynomial
-            // to predict values for the input data
-            double[] pred = poly.Transform(inputs);
-
-            // Where the mean-squared-error (MSE) should be
-            double error = new SquareLoss(outputs).Loss(pred); // 0.0
-
-            double[][] tmpInputs = new double[inputs.Length][];
-            for (int i = 0; i < inputs.Length; i++)
-            {
-                tmpInputs[i] = new double[1] { inputs[i] };
-            }
-        }
         public async void MOGA_FitnessEvaluation(int[] token)
         {
             List<Task> lTasks = new List<Task>();

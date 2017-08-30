@@ -305,7 +305,7 @@ namespace WeightEvolve
 
             LabelRetrive();
             RandomSampleOfBlocks();
-            ParameterLearning();
+            //ParameterLearning();
             aMatrixCreation();
 
             for (int i = 0; i < popSize; i++)
