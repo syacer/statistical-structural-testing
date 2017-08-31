@@ -15,7 +15,7 @@ namespace GADEApproach
         static public double[] highbounds = new double[] { 99, 99 };
         static public Matrix<double> labelMatrix;
 
-        static public void ExperimentDesignA(int numOfLabels = 20)
+        static public void SUTA(int numOfLabels = 20)
         {
             //ExperimentA reveal the performance impact under the number of Labels
             //Non-Concutive Sets = false
@@ -41,7 +41,6 @@ namespace GADEApproach
                     }
                 }
             }
-            InputDomainToExcel();
         }
         static public double[] GenerateProbabilitiesFromEntropy(int numOfLabels = 20, double entropy = 4.32)
         {
@@ -141,7 +140,7 @@ namespace GADEApproach
             }
         }
         //Experiment B: Non-Concecutive Bins -Randomly Shuffered
-        static public void ExperimentDesignB(int numOfLabels = 20, double entropy = 4.32)
+        static public void SUTB(int numOfLabels = 20, double entropy = 4.32)
         {
             double[] probList = GenerateProbabilitiesFromEntropy(numOfLabels, entropy);
 
@@ -215,10 +214,10 @@ namespace GADEApproach
             {
                 Console.WriteLine("{0} test inputs in {1}",numOfInputsPerLabel[i],i+1);
             }
-            InputDomainToExcel();
+
         }
         //Experiment C: Concecutive Bins
-        static public void ExperimentDesignC(int numOfLabels = 20, double entropy = 4.32)
+        static public void SUTC(int numOfLabels = 20, double entropy = 4.32)
         {
             double[] probList = GenerateProbabilitiesFromEntropy(numOfLabels, entropy);
 
@@ -298,7 +297,6 @@ namespace GADEApproach
             {
                 Console.WriteLine("{0} test inputs in {1}", numOfInputsPerLabel[i], i + 1);
             }
-            InputDomainToExcel();
         }
         static double EntropyCalculation(double[] probabilities)
         {
@@ -313,7 +311,7 @@ namespace GADEApproach
             return entropy;
         }
 
-        static void InputDomainToExcel()
+        static public void InputDomainToExcel(string path)
         {
             DataTable labelDt = new DataTable();
 
@@ -332,7 +330,7 @@ namespace GADEApproach
             DateTime time = DateTime.Now;
             string format = "MM-dd-HH-mm-ss";
             string timeStr = time.ToString(format);
-            string filePath = @"C:\Users\shiya\Desktop\record\label_" + timeStr + ".xlsx";
+            string filePath = path;
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);

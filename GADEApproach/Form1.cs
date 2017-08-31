@@ -19,12 +19,12 @@ namespace GADEApproach
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Task.Run(() => new GALS().AlgorithmStart());
+            Task.Run(() => new GALS().ExperimentsA());
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            Task.Run(() => SyntheticSUT.ExperimentDesignA());
+            //Task.Run(() => SyntheticSUT.ExperimentDesignA());
         }
     }
 }
