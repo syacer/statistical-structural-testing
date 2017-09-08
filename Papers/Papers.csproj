@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="MathNet.Numerics, Version=3.20.0.0, Culture=neutral, PublicKeyToken=cd8b63ad3d691a37, processorArchitecture=MSIL">
+      <HintPath>..\packages\MathNet.Numerics.Signed.3.20.0\lib\net40\MathNet.Numerics.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -53,6 +57,7 @@
     <None Include="CACO\diagrams\Bin.vsdx" />
     <None Include="CACO\diagrams\OverFlow.vsdx" />
     <None Include="CACO\diagrams\simplefunc.vsdx" />
+    <None Include="packages.config" />
     <None Include="PathCoverageEntropy\StatisticalTesting.synctex.gz" />
     <None Include="PathCoverageEntropy\StatisticalTesting.tex" />
   </ItemGroup>

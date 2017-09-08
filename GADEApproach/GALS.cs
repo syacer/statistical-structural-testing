@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace GADEApproach
 {
     [Serializable]
-    class Pair<T0,T1,T2>
+    public class Pair<T0,T1,T2>
     {
         public T0 Item0 { set; get; }
         public T1 Item1 { set; get; }
@@ -51,7 +51,7 @@ namespace GADEApproach
         //}
     }
     [Serializable]
-    class GALS
+    public class GALS
     {
         int generation = 0;
         double[] expTriProb;
@@ -59,23 +59,29 @@ namespace GADEApproach
         int numberOfConcurrentTasks = 20;
         //Bins Setup
         readonly int numOfVars = 2;
-        readonly int numOfMinIntervalX = 20;
-        readonly int numOfMinIntervalY = 20;
-        readonly int numOfSamplesInBin = 30;
-        readonly int numOfLabels = 3;
+        readonly int numOfMinIntervalX = 25;
+        readonly int numOfMinIntervalY = 25;
+        //readonly int numOfSamplesInBin = 30;
+        int numOfLabels = -1;
         Pair<int, int, double[]>[] bins; //index, setIndex, triggering probabilities
 
         //GA Setup
-        int maxGen = 5000;
-        int populationSize = 100;
-        double crRate = 0.8;
-        double mtRate = 0.1;
-        double mtPropotion = 0.1;
+        public int maxGen = 5000;
+        public int populationSize = 100;
+        double crRate = 0.9;
+        double mtRate = 0.2;
+        double mtPropotion = 0.2;
         Pair<int, double, Pair<int, int, double[]>[]>[] pool; //index, fitness, bins
         double[][] coverPointSetProb;
 
-        public GALS()
+        //SUT Setup
+        SyntheticSUT sut = null;
+
+        public GALS(int numOfMaxGen, int numLabels, SyntheticSUT SUT)
         {
+            maxGen = numOfMaxGen;
+            numOfLabels = numLabels;
+            sut = SUT;
         }
 
         public class record
@@ -92,128 +98,8 @@ namespace GADEApproach
             public double[] trueTriProbs;
         }
 
-        async public void ExperimentsA()
-        {
-            int count = 0;
-            int[] numOfLabelArray = new int[] { 2, 4, 5, 8, 10, 16, 20 };
-            double[][] entropy = new double[6][];
-            entropy[0] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[1] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[2] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[3] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[4] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[5] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            entropy[6] = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            string fileName;
-
-            for (int i = 0; i < numOfLabelArray.Count(); i++)
-            {
-                for (int j = 0; j < entropy.Count(); j++)
-                {
-                    count = 0;
-                    fileName = numOfLabelArray[i].ToString() + "_" + entropy[j].ToString() + "_";
-                    record[] records30Runs = new record[30];
-                    while (count < 30)
-                    {
-                        records30Runs[count] = new record();
-                        records30Runs[count].fitnessGen = new double[maxGen];
-                        records30Runs[count].goodnessOfFitGen = new double[maxGen];
-
-                        Task t = new Task(() =>
-                        {
-                            SyntheticSUT.SUTB(numOfLabelArray[i], entropy[i][j]);
-                            ExpectedTriggeringProbSetUp();
-                            BinsInitialization();
-                            GAInitialization();
-                            AlgorithmStart(records30Runs[count]);
-                        });
-                        await t;
-                    }
-
-                    // Data Print to Excel
-                    DataTable dataTable = new DataTable();
-
-                    for (int k = 0; k < 90; k++)
-                    {
-                        dataTable.Columns.Add(i.ToString(), Type.GetType("System.Double"));
-                    }
-
-                    for (int u = 0; u < records30Runs[0].goodnessOfFitGen.Count(); u++)
-                    {
-                        object[] rowData = new object[60];
-
-                        for (int k = 0; k < 30; k++)
-                        {   // Remember, calculating true or goodnessOfFit can't be used in
-                            // Total Running Time calculation
-                            rowData[k * 2 + 0] = (object)records30Runs[k].goodnessOfFitGen[u];
-                            rowData[k * 2 + 1] = (object)records30Runs[k].fitnessGen[u];
-                        }
-                        var row = dataTable.NewRow();
-                        row.ItemArray = rowData;
-                        dataTable.Rows.Add(row);
-                        string filePath = @"C:\Users\shiya\Desktop\record\Data_" + fileName + ".xlsx";
-                        if (File.Exists(filePath))
-                        {
-                            File.Delete(filePath);
-                        }
-                        File.Create(filePath).Close();
-                        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath);
-                    }
-
-                    //Write solution to Excel
-                    //Input label mapping
-                    for (int k = 0; k < 30; k++)
-                    {
-                        DataTable dataTable2 = new DataTable();
-                        for (int u = 0; u < numOfLabels; u++)
-                        {
-                            dataTable2.Columns.Add(i.ToString(), Type.GetType("System.Double"));
-                        }
-                        for (int u = 0; u < records30Runs[k].bestSolution.inputsinSets.Length; u++)
-                        {
-                            object[] rowData2 = new object[3];
-                            rowData2[0] = (object)(u % 2);
-                            rowData2[1] = (object)(u / 2);
-                            rowData2[2] = (object)records30Runs[k].bestSolution.inputsinSets[u % 2][u / 2];
-                            var row2 = dataTable2.NewRow();
-                            row2.ItemArray = rowData2;
-                            dataTable2.Rows.Add(row2);
-                        }
-
-                        //Set Probabilities
-                        var rowData3 = records30Runs[k].bestSolution
-                            .setProbabilities.Select(x => (object)x).ToArray();
-                        var row3 = dataTable2.NewRow();
-                        row3.ItemArray = rowData3;
-                        dataTable2.Rows.Add(row3);
-
-                        //True Triggering Probabilities;
-                        var rowData4 = records30Runs[k].bestSolution
-                            .trueTriProbs.Select(x => (object)x).ToArray();
-                        var row4 = dataTable2.NewRow();
-                        row4.ItemArray = rowData4;
-                        dataTable2.Rows.Add(row4);
-
-                        //Total RunTime
-                        object[] rowData5 = new object[1];
-                        rowData5[0] = (object)records30Runs[k].bestSolution.totalRunTime;
-                        var row5 = dataTable2.NewRow();
-                        row5.ItemArray = rowData5;
-                        dataTable2.Rows.Add(row5);
-
-                        string filePath = @"C:\Users\shiya\Desktop\record\Solution_" + fileName + ".xlsx";
-
-                        if (File.Exists(filePath))
-                        {
-                            File.Create(filePath).Close();
-                        }
-                        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable2 }, false, filePath);
-                    }
-                    SyntheticSUT.InputDomainToExcel(@"C:\Users\shiya\Desktop\record\Label_" + fileName + ".xlsx");
-                }
-            }
-        }
-        private void ExpectedTriggeringProbSetUp()
+       
+        public void ExpectedTriggeringProbSetUp()
         {
             expTriProb = new double[numOfLabels];
             for (int i = 0; i < numOfLabels; i++)
@@ -280,14 +166,15 @@ namespace GADEApproach
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
             int[] token = new int[1];
-            FitnessEvaluation(token);
+            FitnessEvaluationNoParll(token);
             while (token[0] == 0) ;
             token[0] = 0;
 
+            Queue<double> last20fitness = new Queue<double>();
             while (generation < maxGen)
             {
                 Reproduction();
-                FitnessEvaluation(token);
+                FitnessEvaluationNoParll(token);
                 while (token[0] == 0) ;
                 token[0] = 0;
 
@@ -359,8 +246,22 @@ namespace GADEApproach
                 //LocalFileAccess lfa = new LocalFileAccess();
                 //lfa.StoreListToLinesAppend(@"C:\Users\shiya\Desktop\record\amatrix.txt",
                 //    new List<string>() {generation.ToString(),aMatrixStr, centerPoint});
-
                 watch.Start();
+
+                if (last20fitness.Count == 200)
+                {
+                    last20fitness.Dequeue();
+                    last20fitness.Enqueue(1.0 / orderedSolutions.First().Item1);
+                    if (last20fitness.All(x => x == last20fitness.First()))
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    last20fitness.Enqueue(1.0 / orderedSolutions.First().Item1);
+                }
+
                 generation += 1;
             }
             watch.Stop();
@@ -383,17 +284,17 @@ namespace GADEApproach
 
         public int[][] MapTestInputsToSets(Pair<int,double,Pair<int,int,double[]>[]> solution)
         {
-            int[][] inputsMapping = new int[(int)(SyntheticSUT.highbounds[0] - SyntheticSUT.lowbounds[0] + 1)][];
-            for (int i = 0; i < (int)(SyntheticSUT.highbounds[0] - SyntheticSUT.lowbounds[0] + 1); i++)
+            int[][] inputsMapping = new int[(int)(sut.highbounds[0] - sut.lowbounds[0] + 1)][];
+            for (int i = 0; i < (int)(sut.highbounds[0] - sut.lowbounds[0] + 1); i++)
             {
-                inputsMapping[i] = new int[(int)(SyntheticSUT.highbounds[1] - SyntheticSUT.lowbounds[1] + 1)];
+                inputsMapping[i] = new int[(int)(sut.highbounds[1] - sut.lowbounds[1] + 1)];
             }
             int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
             for (int i = 0; i < totalNumberOfBins; i++)
             {
                 Tuple<int, int> indexs = Calxyindex(i);
-                double deltaX = (SyntheticSUT.highbounds[0] - SyntheticSUT.lowbounds[0] + 1) / numOfMinIntervalX;
-                double deltaY = (SyntheticSUT.highbounds[1] - SyntheticSUT.lowbounds[1] + 1) / numOfMinIntervalY;
+                double deltaX = (sut.highbounds[0] - sut.lowbounds[0] + 1) / numOfMinIntervalX;
+                double deltaY = (sut.highbounds[1] - sut.lowbounds[1] + 1) / numOfMinIntervalY;
                 int lowX = (int)deltaX * indexs.Item1;
                 int lowY = (int)deltaY * indexs.Item2;
                 for (int x = lowX; x < lowX + deltaX; x++)
@@ -407,7 +308,7 @@ namespace GADEApproach
 
             return inputsMapping;
         }
-        void GAInitialization()
+        public void GAInitialization()
         {
             pool = new Pair<int, double, Pair<int, int, double[]>[]>[populationSize];
             coverPointSetProb = new double[populationSize][];
@@ -426,7 +327,7 @@ namespace GADEApproach
             }
 
         }
-        void BinsInitialization()
+        public void BinsInitialization()
         {
             // Bins Initialization
             int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
@@ -442,13 +343,14 @@ namespace GADEApproach
         void TriProbabilitiesInBinSetup(Pair<int, int, double[]> bin, int binIndex)
         {
             double[] triggeringProbilities = new double[numOfLabels];
-            var labelMatrix = SyntheticSUT.labelMatrix;
+            var labelMatrix = sut.labelMatrix;
             Tuple<int,int> indexs = Calxyindex(binIndex);
-            double deltaX = (SyntheticSUT.highbounds[0] - SyntheticSUT.lowbounds[0]+1) / numOfMinIntervalX;
-            double deltaY = (SyntheticSUT.highbounds[1] - SyntheticSUT.lowbounds[1]+1) / numOfMinIntervalY;
+            double deltaX = (sut.highbounds[0] - sut.lowbounds[0]+1) / numOfMinIntervalX;
+            double deltaY = (sut.highbounds[1] - sut.lowbounds[1]+1) / numOfMinIntervalY;
             int lowX = (int)deltaX * indexs.Item1;
             int lowY = (int)deltaY * indexs.Item2;
 
+// Full Sampling
 #if true
             // Start Section: Full Sampling
             int totalNumOfinputsInBin = (int)deltaX * (int)deltaY;
@@ -462,6 +364,7 @@ namespace GADEApproach
             triggeringProbilities = triggeringProbilities
                 .Select(x => x / totalNumOfinputsInBin).ToArray();
             // End Section: Full Sampling
+//Partial
 #else
             // Start Section: Random Sampling
             List<Tuple<int, int>> samples = new List<Tuple<int, int>>();
@@ -485,13 +388,14 @@ namespace GADEApproach
         public double SelfAdaptivePenaltyFunction(double[] probabilities,double cost)
         {
             int beta = 1;
+            int searchBoundary = 200;
             double[] tempProbs = Copy.DeepCopy(probabilities);
             tempProbs = tempProbs.Select(x =>
             {
                 double y = x * -1 - 0;
                 return Math.Pow((Math.Max(0, y)),beta);
             }).ToArray();
-            double totalInfeasiability = tempProbs.Sum() > numOfLabels ? 100 : tempProbs.Sum() / numOfLabels;
+            double totalInfeasiability = tempProbs.Sum() > searchBoundary * numOfLabels ? 100 : tempProbs.Sum() / searchBoundary * numOfLabels;
             double normalizedCost = cost / numOfLabels;
             bool infeasiablePool = coverPointSetProb.All(x => x.All(y => y < 0) == true) == true ? true : false;
             double distance = infeasiablePool == true ? totalInfeasiability
@@ -521,6 +425,69 @@ namespace GADEApproach
             }
             return Amatrix;
         }
+        public void FitnessEvaluationNoParll(int[] token)
+        {
+            for (int k = 0; k < populationSize; k++)
+            {
+                //Console.Write("task #{0}", id);
+                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels - 1);
+                double[] lastCoverElementSet = new double[numOfLabels];
+                Vector<double> bVector = Vector<double>.Build.Dense(expTriProb);
+
+                for (int i = 0; i < numOfLabels; i++)
+                {
+                    if (pool[k].Item2.Where(x => x.Item1 == numOfLabels).Count() == 0)
+                    {
+                        Console.WriteLine();
+                    }
+                    lastCoverElementSet[i] = pool[k].Item2.Where(x => x.Item1 == numOfLabels).Sum(x => x.Item2[i])
+                        / pool[k].Item2.Where(x => x.Item1 == numOfLabels).Count();
+                }
+                bVector = bVector.Subtract(Vector<double>.Build.Dense(lastCoverElementSet));
+
+                for (int i = 0; i < numOfLabels; i++)
+                {
+
+                    for (int j = 0; j < numOfLabels - 1; j++)
+                    {
+                        if (pool[k].Item2.Where(x => x.Item1 == j + 1).Count() == 0)
+                        {
+                            Console.WriteLine();
+                        }
+                        Amatrix[i, j] = pool[k].Item2.Where(x => x.Item1 == j + 1).Sum(x => x.Item2[i]);
+                        Amatrix[i, j] /= pool[k].Item2.Where(x => x.Item1 == j + 1).Count();
+                        Amatrix[i, j] -= lastCoverElementSet[i];
+                    }
+                }
+                double[] probabilities = Accord.Math.Matrix.Solve(
+                    Amatrix.ToArray(), bVector.ToArray(), leastSquares: true);
+
+                double[] probForCESets = new double[numOfLabels];
+                for (int i = 0; i < numOfLabels - 1; i++)
+                {
+                    probForCESets[i] = probabilities[i];
+                }
+
+                probForCESets[numOfLabels - 1] = 1 - probForCESets.Sum();
+                coverPointSetProb[k] = Copy.DeepCopy(probForCESets);
+                double error = 0;
+                for (int row = 0; row < numOfLabels; row++)
+                {
+                    error += Math.Pow((Amatrix.Row(row).ToRowMatrix().Multiply(Vector<double>.Build.Dense(probForCESets).SubVector(0, probForCESets.Length - 1))[0] - bVector[row]), 2);
+                }
+
+                pool[k].Item1 = error;
+            }
+
+            for (int k = 0; k < populationSize; k++)
+            {
+                double adjustFitness = SelfAdaptivePenaltyFunction(coverPointSetProb[k], pool[k].Item1);
+                pool[k].Item1 = 1.0 / adjustFitness;
+            }
+            token[0] = 1;
+            //Console.WriteLine("Fitness Evaluation Done");
+        }
+
         public async void FitnessEvaluation(int[] token)
         {
             List<Task> lTasks = new List<Task>();

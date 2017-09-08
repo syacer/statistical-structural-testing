@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 
 namespace GADEApproach
 {
-    static class SyntheticSUT
+    public class SyntheticSUT
     {
-        static public double[] lowbounds = new double[] { 0.0, 0.0 };
-        static public double[] highbounds = new double[] { 99, 99 };
-        static public Matrix<double> labelMatrix;
+        public double[] lowbounds = new double[] { 0.0, 0.0 };
+        public double[] highbounds = new double[] { 99, 99 };
+        public Matrix<double> labelMatrix;
 
-        static public void SUTA(int numOfLabels = 20)
+         public void SUTA(int numOfLabels = 20)
         {
             //ExperimentA reveal the performance impact under the number of Labels
             //Non-Concutive Sets = false
@@ -42,7 +42,7 @@ namespace GADEApproach
                 }
             }
         }
-        static public double[] GenerateProbabilitiesFromEntropy(int numOfLabels = 20, double entropy = 4.32)
+         public double[] GenerateProbabilitiesFromEntropy(int numOfLabels = 20, double entropy = 4.32)
         {
             // ExperimentB: Given numOfLabels and entropy, Generate an SUT
             int numOfTestInputs = (int)(highbounds[0] - lowbounds[0] + 1)
@@ -63,7 +63,7 @@ namespace GADEApproach
             return probList;
         }
 
-        static public double ProbabilityFinder(double[] probabilityArray, int index, double entropy)
+         public double ProbabilityFinder(double[] probabilityArray, int index, double entropy)
         {
 
             //Stop when 1. no remain prob. return 1;
@@ -140,7 +140,7 @@ namespace GADEApproach
             }
         }
         //Experiment B: Non-Concecutive Bins -Randomly Shuffered
-        static public void SUTB(int numOfLabels = 20, double entropy = 4.32)
+        public SyntheticSUT SUTB(int numOfLabels = 20, double entropy = 4.32)
         {
             double[] probList = GenerateProbabilitiesFromEntropy(numOfLabels, entropy);
 
@@ -214,10 +214,10 @@ namespace GADEApproach
             {
                 Console.WriteLine("{0} test inputs in {1}",numOfInputsPerLabel[i],i+1);
             }
-
+            return this;
         }
         //Experiment C: Concecutive Bins
-        static public void SUTC(int numOfLabels = 20, double entropy = 4.32)
+        public SyntheticSUT SUTC(int numOfLabels = 20, double entropy = 4.32)
         {
             double[] probList = GenerateProbabilitiesFromEntropy(numOfLabels, entropy);
 
@@ -297,8 +297,10 @@ namespace GADEApproach
             {
                 Console.WriteLine("{0} test inputs in {1}", numOfInputsPerLabel[i], i + 1);
             }
+
+            return this;
         }
-        static double EntropyCalculation(double[] probabilities)
+        double EntropyCalculation(double[] probabilities)
         {
             double entropy = 0;
             foreach (double p in probabilities)
@@ -311,7 +313,7 @@ namespace GADEApproach
             return entropy;
         }
 
-        static public void InputDomainToExcel(string path)
+        public void InputDomainToExcel(string path)
         {
             DataTable labelDt = new DataTable();
 
@@ -335,8 +337,8 @@ namespace GADEApproach
             {
                 File.Delete(filePath);
             }
-            File.Create(filePath).Close();
-            ExcelOperation.dataTableListToExcel(new List<DataTable>() { labelDt }, false, filePath);
+
+            ExcelOperation.dataTableListToExcel(new List<DataTable>() { labelDt }, false, filePath, true);
             Console.WriteLine("Finish Write Labels to Excel");
         }
     }
