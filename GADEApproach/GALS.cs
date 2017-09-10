@@ -7,6 +7,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 //using Accord.Math;
 
@@ -491,15 +492,15 @@ namespace GADEApproach
         public async void FitnessEvaluation(int[] token)
         {
             List<Task> lTasks = new List<Task>();
-
+            Mutex mutex_K = new Mutex(false, "lockFork");
             for (int k = 0; k < populationSize;)
             {
                 lTasks.Add(Task.Run(() =>
                 {
-                    GlobalVar.mutex_K.WaitOne();
+                    mutex_K.WaitOne();
                     int id = k;
                     k = k + 1;
-                    GlobalVar.mutex_K.ReleaseMutex();
+                    mutex_K.ReleaseMutex();
 
                     //Console.Write("task #{0}", id);
                     Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels - 1);

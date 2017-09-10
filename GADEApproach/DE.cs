@@ -10,6 +10,7 @@ namespace GADEApproach
 {
     using MathNet.Numerics.LinearAlgebra.Double;
     using System.IO;
+    using System.Threading;
 
     [Serializable]
     class DE
@@ -57,7 +58,7 @@ namespace GADEApproach
         public async void DE_FitnessEvaluation(int[] token)
         {
             List<Task> lTasks = new List<Task>();
-
+            Mutex mutex_K = new Mutex(false, "lockFork");
             // Test inputs Generation
             // Fitness Evaluation
             for (int k = 0; k < popSize; k++)
@@ -66,11 +67,11 @@ namespace GADEApproach
 
                 lTasks.Add(Task.Run(() =>
                 {
-                    GlobalVar.mutex_K.WaitOne();
+                    mutex_K.WaitOne();
                         // Console.WriteLine(k);
                         int id = k;
                     k = k + 1;
-                    GlobalVar.mutex_K.ReleaseMutex();
+                    mutex_K.ReleaseMutex();
                     FitnessCal(pool[id]);
                         //Console.WriteLine("{0} job finish",id);
                     }));
