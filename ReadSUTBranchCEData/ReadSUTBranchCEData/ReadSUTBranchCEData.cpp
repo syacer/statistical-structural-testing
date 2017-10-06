@@ -9,7 +9,7 @@ namespace ReadSUTBranchCEData {
 	{	
 
 		array<int> ^ces = gcnew array<int>(100);
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 200; i++)
 		{
 			ces[i] = 0;
 		}
@@ -33,6 +33,15 @@ namespace ReadSUTBranchCEData {
 		{
 			BestMoveSUT mySUT;
 			mySUT.BestMove(inputs[0], inputs[1], pp);
+		}
+		else if (selectSUT == 4)
+		{
+			nsichneuSUT mySUT;
+			mySUT.Nsichneu(inputs[0],inputs[1],inputs[2],
+				inputs[3], inputs[4], inputs[5], 
+				inputs[6], inputs[7], inputs[8], 
+				inputs[9], inputs[10], inputs[11], 
+				inputs[12], inputs[13], pp);
 		}
 		outputs = ces;
 	}

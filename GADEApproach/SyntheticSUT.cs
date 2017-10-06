@@ -87,7 +87,7 @@ namespace GADEApproach
                 {
                     return 1.0;
                 }
-                int retryTimes = 200;
+                int retryTimes = 2000;
                 bool success = false;
                 double rnd = -1;
                 while (retryTimes > 0)

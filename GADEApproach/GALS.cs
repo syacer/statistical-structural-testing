@@ -89,6 +89,7 @@ namespace GADEApproach
         {
             public double[] fitnessGen;
             public double[] goodnessOfFitGen;
+            public solution[] bestSoluionGen;
             public solution bestSolution;
         }
         public class solution
@@ -201,6 +202,7 @@ namespace GADEApproach
 
                  if (bestSolution == null)
                 {
+                    Console.WriteLine("Current Task ID #{0}",Task.CurrentId);
                     Console.WriteLine("No Feasiable Solution, # Of negative Values {0}",
                         coverPointSetProb[orderedSolutions
                         .First().Item0].Sum(x =>
@@ -234,19 +236,8 @@ namespace GADEApproach
                 record.fitnessGen[generation] = 1.0 / orderedSolutions.First().Item1;
                 // Goodness Of Fit Of Best Solution
                 record.goodnessOfFitGen[generation] = GoodnessOfFit(orderedSolutions.First());
-                
-                //// Dump Best Solution so far to File
-                //var AmatrixOfBestSoution = AmatrixCalculation(orderedSolutions.First().Item0);
-                //string aMatrixStr = AmatrixOfBestSoution.ToString();
-                //string centerPoint = null;
-                //foreach (double d in coverPointSetProb[orderedSolutions.First().Item0])
-                //{
-                //    centerPoint += d.ToString() + " ";
-                //}
-                
-                //LocalFileAccess lfa = new LocalFileAccess();
-                //lfa.StoreListToLinesAppend(@"C:\Users\shiya\Desktop\record\amatrix.txt",
-                //    new List<string>() {generation.ToString(),aMatrixStr, centerPoint});
+                record.bestSoluionGen[generation].inputsinSets = MapTestInputsToSets(orderedSolutions.First());
+                record.bestSoluionGen[generation].setProbabilities = Copy.DeepCopy(coverPointSetProb[index]);
                 watch.Start();
 
                 if (last20fitness.Count == 200)
@@ -265,20 +256,15 @@ namespace GADEApproach
 
                 generation += 1;
             }
+
             watch.Stop();
 
             var rankedOneSolution = pool.OrderByDescending(x => x.Item1).First();
             record.bestSolution.inputsinSets = MapTestInputsToSets(rankedOneSolution);
             var totalRuningTime = watch.ElapsedMilliseconds;
             record.bestSolution.totalRunTime = totalRuningTime;
-
-            // Below records needs to run constrained quadratic formula solver, No need for Experiment A
-            //Fake True Triggering Probability, No need For Experiment A
-            for (int i = 0; i < numOfLabels; i++)
-            {
-                record.bestSolution.trueTriProbs[i] = -1;
-            }
-            // Invalid set probabilities, No need For Experiment A
+            //solution lastSolution = record.bestSoluionGen.Last(x=>x.trueTriProbs.Any(y=> y != 0) == true);
+            //record.bestSolution.trueTriProbs = lastSolution.trueTriProbs;
             record.bestSolution.setProbabilities = Copy.DeepCopy(
                 coverPointSetProb[rankedOneSolution.Item0]);
         }
@@ -328,6 +314,7 @@ namespace GADEApproach
             }
 
         }
+
         public void BinsInitialization()
         {
             // Bins Initialization

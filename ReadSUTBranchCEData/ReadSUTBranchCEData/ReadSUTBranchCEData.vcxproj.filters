@@ -39,6 +39,9 @@
     <ClInclude Include="BestMoveSUT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="nsichneu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ReadSUTBranchCEData.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BestMoveSUT.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nsichneu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

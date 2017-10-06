@@ -13,9 +13,9 @@ namespace GADEApproach
     public static class Experiments
     {
         static int maxGen = 5000;
-        static int runTimes = 30;
+        static int runTimes = 20;
         static string rootPath = @"C:\Users\shiya\Desktop\recordTEST\";
-        static int numberOfConcurrentTasks = 15;
+        static int numberOfConcurrentTasks = 7;
 
         public async static void ExperimentsB()
         {
@@ -48,6 +48,13 @@ namespace GADEApproach
                         recordsRuns[run].bestSolution = new solution();
                         recordsRuns[run].bestSolution.setProbabilities = new double[numOfLabelArray[i]];
                         recordsRuns[run].bestSolution.trueTriProbs = new double[numOfLabelArray[i]];
+                        recordsRuns[run].bestSoluionGen = new solution[maxGen];
+                        for (int br = 0; br < maxGen; br++)
+                        {
+                            recordsRuns[run].bestSoluionGen[br] = new solution();
+                            recordsRuns[run].bestSoluionGen[br].setProbabilities = new double[numOfLabelArray[i]];
+                            recordsRuns[run].bestSoluionGen[br].trueTriProbs = new double[numOfLabelArray[i]];
+                        }
                     }
 
                     List<Task> taskList = new List<Task>();
@@ -70,7 +77,7 @@ namespace GADEApproach
                                         GlobalVar.mutex_K.ReleaseMutex();
                                         return;
                                     }
-                                    SyntheticSUT sutTypeC = new SyntheticSUT().SUTC(numOfLabelArray[i], entropy[i][j]);
+                                    SyntheticSUT sutTypeC = new SyntheticSUT().SUTB(numOfLabelArray[i], entropy[i][j]);
                                     sutTypeC.InputDomainToExcel(rootPath + @"Label_" + fileName + "_" + "r" + id.ToString() + ".xlsx");
                                     GlobalVar.mutex_K.ReleaseMutex();
                                     GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC);
