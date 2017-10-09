@@ -9,24 +9,29 @@ using System.Threading.Tasks;
 
 namespace GADEApproach
 {
-    public class SyntheticSUT
+    public class SyntheticSUT:SUT
     {
-        public double[] lowbounds = new double[] { 0.0, 0.0 };
-        public double[] highbounds = new double[] { 99, 99 };
         public Matrix<double> labelMatrix;
-
-         public void SUTA(int numOfLabels = 20)
+        public SyntheticSUT()
+        {
+           numOfLabels = -1;
+           lowbounds = new double[] { 0.0, 0.0 };
+           highbounds = new double[] { 99, 99 };
+           numOfMinIntervalX = 25;
+           numOfMinIntervalY = 25;
+        }
+        public void SUTA(int nOfLables = 20)
         {
             //ExperimentA reveal the performance impact under the number of Labels
             //Non-Concutive Sets = false
             //Entropy = log_2(M) sizes equal
-
+            numOfLabels = nOfLables;
             labelMatrix = Matrix<double>.Build.Dense((int)(highbounds[0] - lowbounds[0] + 1),
                 (int)(highbounds[1] - lowbounds[1] + 1));
 
             int num = (((int)(highbounds[1] - lowbounds[1]) + 1)
-                * ((int)(highbounds[0] - lowbounds[0]) + 1)) / numOfLabels;
-            for (int ln = 1; ln <= numOfLabels; ln++)
+                * ((int)(highbounds[0] - lowbounds[0]) + 1)) / nOfLables;
+            for (int ln = 1; ln <= nOfLables; ln++)
             {
                 int count = 0;
                 while (count < num)
@@ -340,6 +345,65 @@ namespace GADEApproach
 
             ExcelOperation.dataTableListToExcel(new List<DataTable>() { labelDt }, false, filePath, true);
             Console.WriteLine("Finish Write Labels to Excel");
+        }
+
+        public void BinsInitialization()
+        {
+            // Bins Initialization
+            int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
+            bins = new Pair<int, int, double[]>[totalNumberOfBins];
+            for (int i = 0; i < totalNumberOfBins; i++)
+            {
+                bins[i] = new Pair<int, int, double[]>();
+                bins[i].Item0 = i;
+                bins[i].Item1 = -1;
+                TriProbabilitiesInBinSetup(bins[i], i);
+            }
+        }
+
+        void TriProbabilitiesInBinSetup(Pair<int, int, double[]> bin, int binIndex)
+        {
+            double[] triggeringProbilities = new double[numOfLabels];
+            Tuple<int, int> indexs = Calxyindex(binIndex);
+            double deltaX = (highbounds[0] - lowbounds[0] + 1) / numOfMinIntervalX;
+            double deltaY = (highbounds[1] - lowbounds[1] + 1) / numOfMinIntervalY;
+            int lowX = (int)deltaX * indexs.Item1;
+            int lowY = (int)deltaY * indexs.Item2;
+
+            // Full Sampling
+#if true
+            // Start Section: Full Sampling
+            int totalNumOfinputsInBin = (int)deltaX * (int)deltaY;
+            for (int i = lowX; i < lowX + deltaX; i++)
+            {
+                for (int j = lowY; j < lowY + deltaY; j++)
+                {
+                    triggeringProbilities[(int)labelMatrix[i, j] - 1] += 1;
+                }
+            }
+            triggeringProbilities = triggeringProbilities
+                .Select(x => x / totalNumOfinputsInBin).ToArray();
+            // End Section: Full Sampling
+            //Partial
+#else
+            // Start Section: Random Sampling
+            List<Tuple<int, int>> samples = new List<Tuple<int, int>>();
+            while (samples.Count < numOfSamplesInBin)
+            {
+                int xIndex = GlobalVar.rnd.Next((int)lowX, (int)(lowX+deltaX+1));
+                int yIndex = GlobalVar.rnd.Next((int)lowX, (int)(lowX + deltaX + 1));
+                if (samples.Where(x => x.Item1 == xIndex
+                    && x.Item2 == yIndex).Count() == 0)
+                {
+                    samples.Add(new Tuple<int, int>(xIndex, yIndex));
+                    int labelIndex = (int)labelMatrix[xIndex, yIndex]-1;
+                    triggeringProbilities[labelIndex] += 1; 
+                }
+            }
+            triggeringProbilities = triggeringProbilities
+                .Select(x => x / numOfSamplesInBin).ToArray();
+#endif
+            bin.Item2 = triggeringProbilities;
         }
     }
 }

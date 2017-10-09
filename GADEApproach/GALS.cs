@@ -58,14 +58,7 @@ namespace GADEApproach
         double[] expTriProb;
         //Multi-Threading Setup
         int numberOfConcurrentTasks = 20;
-        //Bins Setup
-        readonly int numOfVars = 2;
-        readonly int numOfMinIntervalX = 25;
-        readonly int numOfMinIntervalY = 25;
-        //readonly int numOfSamplesInBin = 30;
         int numOfLabels = -1;
-        Pair<int, int, double[]>[] bins; //index, setIndex, triggering probabilities
-
         //GA Setup
         public int maxGen = 5000;
         public int populationSize = 100;
@@ -76,9 +69,9 @@ namespace GADEApproach
         double[][] coverPointSetProb;
 
         //SUT Setup
-        SyntheticSUT sut = null;
+        SUT sut = null;
 
-        public GALS(int numOfMaxGen, int numLabels, SyntheticSUT SUT)
+        public GALS(int numOfMaxGen, int numLabels, SUT SUT)
         {
             maxGen = numOfMaxGen;
             numOfLabels = numLabels;
@@ -100,15 +93,6 @@ namespace GADEApproach
             public double[] trueTriProbs;
         }
 
-       
-        public void ExpectedTriggeringProbSetUp()
-        {
-            expTriProb = new double[numOfLabels];
-            for (int i = 0; i < numOfLabels; i++)
-            {
-                expTriProb[i] = 1.0 / numOfLabels;
-            }
-        }
         public double GoodnessOfFit(Pair<int, double, Pair<int, int, double[]>[]> solution)
         {
             Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels - 1);
@@ -236,7 +220,7 @@ namespace GADEApproach
                 record.fitnessGen[generation] = 1.0 / orderedSolutions.First().Item1;
                 // Goodness Of Fit Of Best Solution
                 record.goodnessOfFitGen[generation] = GoodnessOfFit(orderedSolutions.First());
-                record.bestSoluionGen[generation].inputsinSets = MapTestInputsToSets(orderedSolutions.First());
+                record.bestSoluionGen[generation].inputsinSets = sut.MapTestInputsToSets(orderedSolutions.First());
                 record.bestSoluionGen[generation].setProbabilities = Copy.DeepCopy(coverPointSetProb[index]);
                 watch.Start();
 
@@ -260,7 +244,7 @@ namespace GADEApproach
             watch.Stop();
 
             var rankedOneSolution = pool.OrderByDescending(x => x.Item1).First();
-            record.bestSolution.inputsinSets = MapTestInputsToSets(rankedOneSolution);
+            record.bestSolution.inputsinSets = sut.MapTestInputsToSets(rankedOneSolution);
             var totalRuningTime = watch.ElapsedMilliseconds;
             record.bestSolution.totalRunTime = totalRuningTime;
             //solution lastSolution = record.bestSoluionGen.Last(x=>x.trueTriProbs.Any(y=> y != 0) == true);
@@ -269,32 +253,6 @@ namespace GADEApproach
                 coverPointSetProb[rankedOneSolution.Item0]);
         }
 
-        public int[][] MapTestInputsToSets(Pair<int,double,Pair<int,int,double[]>[]> solution)
-        {
-            int[][] inputsMapping = new int[(int)(sut.highbounds[0] - sut.lowbounds[0] + 1)][];
-            for (int i = 0; i < (int)(sut.highbounds[0] - sut.lowbounds[0] + 1); i++)
-            {
-                inputsMapping[i] = new int[(int)(sut.highbounds[1] - sut.lowbounds[1] + 1)];
-            }
-            int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
-            for (int i = 0; i < totalNumberOfBins; i++)
-            {
-                Tuple<int, int> indexs = Calxyindex(i);
-                double deltaX = (sut.highbounds[0] - sut.lowbounds[0] + 1) / numOfMinIntervalX;
-                double deltaY = (sut.highbounds[1] - sut.lowbounds[1] + 1) / numOfMinIntervalY;
-                int lowX = (int)deltaX * indexs.Item1;
-                int lowY = (int)deltaY * indexs.Item2;
-                for (int x = lowX; x < lowX + deltaX; x++)
-                {
-                    for (int y = lowY; y < lowY + deltaY; y++)
-                    {
-                        inputsMapping[x][y] = solution.Item2[i].Item1;
-                    }
-                }
-            }
-
-            return inputsMapping;
-        }
         public void GAInitialization()
         {
             pool = new Pair<int, double, Pair<int, int, double[]>[]>[populationSize];
@@ -305,7 +263,7 @@ namespace GADEApproach
                 pool[i] = new Pair<int, double, Pair<int, int, double[]>[]>();
                 pool[i].Item0 = i;
                 pool[i].Item1 = -1;
-                pool[i].Item2 = Copy.DeepCopy(bins);
+                pool[i].Item2 = Copy.DeepCopy(sut.bins);
                 for (int j = 0; j < pool[i].Item2.Length; j++)
                 {
                     pool[i].Item2[j].Item1 = GlobalVar.rnd.Next(1,numOfLabels+1);
@@ -313,65 +271,6 @@ namespace GADEApproach
                 SolutionRepair(pool[i].Item2);
             }
 
-        }
-
-        public void BinsInitialization()
-        {
-            // Bins Initialization
-            int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
-            bins = new Pair<int, int, double[]>[totalNumberOfBins];
-            for (int i = 0; i < totalNumberOfBins; i++)
-            {
-                bins[i] = new Pair<int, int, double[]>();
-                bins[i].Item0 = i;
-                bins[i].Item1 = -1;
-                TriProbabilitiesInBinSetup(bins[i],i);
-            }
-        }
-        void TriProbabilitiesInBinSetup(Pair<int, int, double[]> bin, int binIndex)
-        {
-            double[] triggeringProbilities = new double[numOfLabels];
-            var labelMatrix = sut.labelMatrix;
-            Tuple<int,int> indexs = Calxyindex(binIndex);
-            double deltaX = (sut.highbounds[0] - sut.lowbounds[0]+1) / numOfMinIntervalX;
-            double deltaY = (sut.highbounds[1] - sut.lowbounds[1]+1) / numOfMinIntervalY;
-            int lowX = (int)deltaX * indexs.Item1;
-            int lowY = (int)deltaY * indexs.Item2;
-
-// Full Sampling
-#if true
-            // Start Section: Full Sampling
-            int totalNumOfinputsInBin = (int)deltaX * (int)deltaY;
-            for (int i = lowX; i < lowX + deltaX; i++)
-            {
-                for (int j = lowY; j < lowY + deltaY; j++)
-                {
-                    triggeringProbilities[(int)labelMatrix[i, j]-1] += 1;
-                }
-            }
-            triggeringProbilities = triggeringProbilities
-                .Select(x => x / totalNumOfinputsInBin).ToArray();
-            // End Section: Full Sampling
-//Partial
-#else
-            // Start Section: Random Sampling
-            List<Tuple<int, int>> samples = new List<Tuple<int, int>>();
-            while (samples.Count < numOfSamplesInBin)
-            {
-                int xIndex = GlobalVar.rnd.Next((int)lowX, (int)(lowX+deltaX+1));
-                int yIndex = GlobalVar.rnd.Next((int)lowX, (int)(lowX + deltaX + 1));
-                if (samples.Where(x => x.Item1 == xIndex
-                    && x.Item2 == yIndex).Count() == 0)
-                {
-                    samples.Add(new Tuple<int, int>(xIndex, yIndex));
-                    int labelIndex = (int)labelMatrix[xIndex, yIndex]-1;
-                    triggeringProbilities[labelIndex] += 1; 
-                }
-            }
-            triggeringProbilities = triggeringProbilities
-                .Select(x => x / numOfSamplesInBin).ToArray();
-#endif
-            bin.Item2 = triggeringProbilities;
         }
         public double SelfAdaptivePenaltyFunction(double[] probabilities,double cost)
         {
@@ -571,7 +470,7 @@ namespace GADEApproach
            var part3 = a1.Select((value, i) => { return i > po2 ? value : -1;
             }).Where(x => x != -1);
             var newLabelSettings = part1.Concat(part2).Concat(part3).ToArray();
-            var newBins = Copy.DeepCopy(bins);
+            var newBins = Copy.DeepCopy(sut.bins);
             for (int i = 0; i < newBins.Length; i++)
             {
                 newBins[i].Item1 = newLabelSettings[i];
@@ -667,12 +566,13 @@ namespace GADEApproach
                 }
             }
         }
-
-        Tuple<int, int> Calxyindex(int binIndex)
+        public void ExpectedTriggeringProbSetUp()
         {
-            int x = binIndex % numOfMinIntervalX;
-            int y = binIndex / numOfMinIntervalX;
-            return new Tuple<int, int>(x, y);
+            expTriProb = new double[numOfLabels];
+            for (int i = 0; i < numOfLabels; i++)
+            {
+                expTriProb[i] = 1.0 / numOfLabels;
+            }
         }
         private int[] FitnessPropotionateSampling()
         {

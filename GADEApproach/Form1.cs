@@ -129,5 +129,10 @@ namespace GADEApproach
             SolverCLP.objFuncDel fAndcDel = new ObjectiveFunctions(aMatrix, expTriProb).objectFuncQHStyle;
             var s2 = SolverCLP.solver(fAndcDel);
         }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Task.Run(() => Experiments.ExperimentsB());
+        }
     }
 }

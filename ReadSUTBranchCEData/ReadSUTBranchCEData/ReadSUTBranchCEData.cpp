@@ -7,9 +7,9 @@ namespace ReadSUTBranchCEData {
 
 	void readBranch::ReadBranchCLIFunc(array<int>^ inputs, array<int> ^%outputs, int selectSUT) 
 	{	
-
-		array<int> ^ces = gcnew array<int>(100);
-		for (int i = 0; i < 200; i++)
+		const int arraySize = 200;
+		array<int> ^ces = gcnew array<int>(arraySize);
+		for (int i = 0; i < arraySize; i++)
 		{
 			ces[i] = 0;
 		}

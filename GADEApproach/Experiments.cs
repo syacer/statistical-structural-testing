@@ -19,7 +19,32 @@ namespace GADEApproach
 
         public async static void ExperimentsB()
         {
+            // Real SUT
+            RealSUT bestMove = new RealSUT();
+            bestMove.sutBestMove(); // Setup triggering probabilities in bins
+            GALS gals = new GALS(5000,bestMove.numOfLabels,bestMove);
 
+            record[] recordsRuns = new record[1];
+            List<Task> lTasks = new List<Task>();
+            for (int run = 0; run < 1; run++)
+            {
+                recordsRuns[run] = new record();
+                recordsRuns[run].fitnessGen = new double[maxGen];
+                recordsRuns[run].goodnessOfFitGen = new double[maxGen];
+                recordsRuns[run].bestSolution = new solution();
+                recordsRuns[run].bestSolution.setProbabilities = new double[bestMove.numOfLabels];
+                recordsRuns[run].bestSolution.trueTriProbs = new double[bestMove.numOfLabels];
+                recordsRuns[run].bestSoluionGen = new solution[maxGen];
+                for (int br = 0; br < maxGen; br++)
+                {
+                    recordsRuns[run].bestSoluionGen[br] = new solution();
+                    recordsRuns[run].bestSoluionGen[br].setProbabilities = new double[bestMove.numOfLabels];
+                    recordsRuns[run].bestSoluionGen[br].trueTriProbs = new double[bestMove.numOfLabels];
+                }
+            }
+            gals.ExpectedTriggeringProbSetUp();
+            gals.GAInitialization();
+            gals.AlgorithmStart(recordsRuns[0]);
         } 
         public async static void ExperimentsA(int[] numOfLabelArray, double[][] entropy,string root)
         {
@@ -82,7 +107,7 @@ namespace GADEApproach
                                     GlobalVar.mutex_K.ReleaseMutex();
                                     GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC);
                                     gals.ExpectedTriggeringProbSetUp();
-                                    gals.BinsInitialization();
+                                    sutTypeC.BinsInitialization();
                                     gals.GAInitialization();
                                     gals.AlgorithmStart(recordsRuns[id]);
                                     Console.WriteLine(id);
