@@ -132,7 +132,12 @@ namespace GADEApproach
 
         private void button6_Click(object sender, EventArgs e)
         {
-            Task.Run(() => Experiments.ExperimentsB());
+            Task.Run(() => Experiments.BestMoveExperimentsB());
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            Task.Run(() => Experiments.nsichneuExperimentsB());
         }
     }
 }

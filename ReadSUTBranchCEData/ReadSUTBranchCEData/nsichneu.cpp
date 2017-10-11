@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "stdio.h"
 #include "nsichneu.h"
+#include "stdio.h"
 
 namespace sutnamespace
 {
@@ -57,18 +57,18 @@ namespace sutnamespace
 	nsichneuSUT::~nsichneuSUT()
 	{
 		printf("\nP1_marking_member_0: \n");
-		for (int j = 0; j < sizeof(P1_marking_member_0); j++)
-		{
-			printf("%d ",P1_marking_member_0[j]);
-		}
+		//for (int j = 0; j < sizeof(P1_marking_member_0); j++)
+		//{
+		//	printf("%d ",P1_marking_member_0[j]);
+		//}
 
 		delete[] P1_marking_member_0;
 		printf("\nP2_marking_member_1: \n");
-		for (int j = 0; j < sizeof(P2_marking_member_0); j++)
-		{
-			printf("%d ", P2_marking_member_0[j]);
-		}
-		printf("\nP2_marking_member_1: \n");
+		//for (int j = 0; j < sizeof(P2_marking_member_0); j++)
+		//{
+		//	printf("%d ", P2_marking_member_0[j]);
+		//}
+		//printf("\nP2_marking_member_1: \n");
 		delete[] P2_marking_member_0;
 		for (int j = 0; j < sizeof(P3_marking_member_0); j++)
 		{

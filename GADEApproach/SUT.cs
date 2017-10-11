@@ -24,6 +24,7 @@ namespace GADEApproach
 
         public int[][] MapTestInputsToSets(Pair<int,double,Pair<int,int,double[]>[]> solution)
         {
+            // This is obsolete function, which is no longer usable.
             int[][] inputsMapping = new int[(int)(highbounds[0] - lowbounds[0] + 1)][];
             for (int i = 0; i < (int)(highbounds[0] - lowbounds[0] + 1); i++)
             {

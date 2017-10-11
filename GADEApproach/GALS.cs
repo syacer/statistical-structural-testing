@@ -82,15 +82,14 @@ namespace GADEApproach
         {
             public double[] fitnessGen;
             public double[] goodnessOfFitGen;
-            public solution[] bestSoluionGen;
             public solution bestSolution;
         }
         public class solution
         {
-            public int[][] inputsinSets; // [1][2] : the second inputs in set 1
+            //public int[][] inputsinSets; // [1][2] : the second inputs in set 1, Obsolete variable
+            public int[] binSetup;
             public double[] setProbabilities;
             public long totalRunTime;
-            public double[] trueTriProbs;
         }
 
         public double GoodnessOfFit(Pair<int, double, Pair<int, int, double[]>[]> solution)
@@ -182,8 +181,6 @@ namespace GADEApproach
                     }
                 }
 
-                Console.WriteLine("Gen #{0} Fitness: {1}", generation, 1.0 / pool.Max(x => x.Item1));
-
                  if (bestSolution == null)
                 {
                     Console.WriteLine("Current Task ID #{0}",Task.CurrentId);
@@ -218,13 +215,12 @@ namespace GADEApproach
                     Console.WriteLine("Estimated Triggering Probabilities {0}", estTriProbabilities.Min());
                 }
                 record.fitnessGen[generation] = 1.0 / orderedSolutions.First().Item1;
-                // Goodness Of Fit Of Best Solution
                 record.goodnessOfFitGen[generation] = GoodnessOfFit(orderedSolutions.First());
-                record.bestSoluionGen[generation].inputsinSets = sut.MapTestInputsToSets(orderedSolutions.First());
-                record.bestSoluionGen[generation].setProbabilities = Copy.DeepCopy(coverPointSetProb[index]);
+
+                Console.WriteLine("Gen #{0} Fitness: {1}",generation, record.goodnessOfFitGen[generation]);
                 watch.Start();
 
-                if (last20fitness.Count == 200)
+                if (last20fitness.Count == 100)
                 {
                     last20fitness.Dequeue();
                     last20fitness.Enqueue(1.0 / orderedSolutions.First().Item1);
@@ -244,11 +240,9 @@ namespace GADEApproach
             watch.Stop();
 
             var rankedOneSolution = pool.OrderByDescending(x => x.Item1).First();
-            record.bestSolution.inputsinSets = sut.MapTestInputsToSets(rankedOneSolution);
+            record.bestSolution.binSetup = Copy.DeepCopy(rankedOneSolution.Item2.Select(x => x.Item1).ToArray());
             var totalRuningTime = watch.ElapsedMilliseconds;
             record.bestSolution.totalRunTime = totalRuningTime;
-            //solution lastSolution = record.bestSoluionGen.Last(x=>x.trueTriProbs.Any(y=> y != 0) == true);
-            //record.bestSolution.trueTriProbs = lastSolution.trueTriProbs;
             record.bestSolution.setProbabilities = Copy.DeepCopy(
                 coverPointSetProb[rankedOneSolution.Item0]);
         }

@@ -12,40 +12,164 @@ namespace GADEApproach
 {
     public static class Experiments
     {
-        static int maxGen = 5000;
+        static int maxGen = 200;
         static int runTimes = 20;
         static string rootPath = @"C:\Users\shiya\Desktop\recordTEST\";
         static int numberOfConcurrentTasks = 7;
-
-        public async static void ExperimentsB()
+        
+        public static void nsichneuExperimentsB()
         {
+            // inputs: xxx|xxxxx|000000|
+            ReadSUTBranchCEData.readBranch rbce = new ReadSUTBranchCEData.readBranch();
+            int[] inputs = new int[]
+            {
+               1,2,3,1,1,1,1,1,0,0,0,0,0,0
+
+
+            };
+            List<string> outputs = new List<string>();
+
+            for (int i1 = 0; i1 < 4; i1++)
+            {
+                for (int i2 = 0; i2 < 4; i2++)
+                {
+                    for (int i3 = 0; i3 < 4; i3++)
+                    {
+                        for (int i4 = 0; i4 < 10; i4++)
+                        {
+                            for (int i5 = 0; i5 < 10; i5++)
+                            {
+                                for (int i6 = 0; i6 < 10; i6++)
+                                {
+                                    for (int i7 = 0; i7 < 10; i7++)
+                                    {
+                                        for (int i8 = 0; i8 < 10; i8++)
+                                        {
+                                            inputs = new int[]
+                                            {
+                                                 i1,i2,i3,i4,i5,i6,i7,i8,0,0,0,0,0,0
+                                            };
+                                            int[] output = null;
+                                            rbce.ReadBranchCLIFunc(inputs, ref output, 3);
+                                            string outputStr = "";
+                                            foreach (int x in output)
+                                            {
+                                                outputStr += x.ToString();
+                                            }
+                                            outputs.Add(outputStr);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            var distinctOutputs = outputs.Distinct();
+
+        }
+        public static void BestMoveExperimentsB()
+        {
+            rootPath = @"C:\Users\shiya\Desktop\realSUT\bestMove\";
+            maxGen = 3000;
             // Real SUT
             RealSUT bestMove = new RealSUT();
             bestMove.sutBestMove(); // Setup triggering probabilities in bins
-            GALS gals = new GALS(5000,bestMove.numOfLabels,bestMove);
+            GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove);
 
-            record[] recordsRuns = new record[1];
-            List<Task> lTasks = new List<Task>();
-            for (int run = 0; run < 1; run++)
-            {
-                recordsRuns[run] = new record();
-                recordsRuns[run].fitnessGen = new double[maxGen];
-                recordsRuns[run].goodnessOfFitGen = new double[maxGen];
-                recordsRuns[run].bestSolution = new solution();
-                recordsRuns[run].bestSolution.setProbabilities = new double[bestMove.numOfLabels];
-                recordsRuns[run].bestSolution.trueTriProbs = new double[bestMove.numOfLabels];
-                recordsRuns[run].bestSoluionGen = new solution[maxGen];
-                for (int br = 0; br < maxGen; br++)
-                {
-                    recordsRuns[run].bestSoluionGen[br] = new solution();
-                    recordsRuns[run].bestSoluionGen[br].setProbabilities = new double[bestMove.numOfLabels];
-                    recordsRuns[run].bestSoluionGen[br].trueTriProbs = new double[bestMove.numOfLabels];
-                }
-            }
+            record record = new record();
+            record.fitnessGen = new double[maxGen];
+            record.goodnessOfFitGen = new double[maxGen];
+            record.bestSolution = new solution();
+
             gals.ExpectedTriggeringProbSetUp();
             gals.GAInitialization();
-            gals.AlgorithmStart(recordsRuns[0]);
-        } 
+            gals.AlgorithmStart(record);
+
+            //Write adjusted and overall fitnesses into excel
+            DataTable dataTable = new DataTable();
+            dataTable.Columns.Add("adjustedFitness", Type.GetType("System.Double"));
+            dataTable.Columns.Add("overallFitness", Type.GetType("System.Double"));
+            for (int u = 0; u < record.fitnessGen.Length; u++)
+            {
+                object[] rowData = new object[2];
+                rowData[0] = (object)record.fitnessGen[u];
+                rowData[1] = (object)record.goodnessOfFitGen[u];
+                var row = dataTable.NewRow();
+                row.ItemArray = rowData;
+                dataTable.Rows.Add(row);
+            }
+            string filePath = rootPath + "fitnesses.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath, false);
+            }
+
+            //Write bins setup into excel
+            DataTable dataTablebinssetup = new DataTable();
+            dataTablebinssetup.Columns.Add("binssetup", Type.GetType("System.Double"));
+            for (int u = 0; u < record.bestSolution.binSetup.Length; u++)
+            {
+                object[] rowData = new object[1];
+                rowData[0] = (object)record.bestSolution.binSetup[u];
+                var row = dataTablebinssetup.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinssetup.Rows.Add(row);
+            }
+            filePath = rootPath + "binsSetup.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, false, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, false, filePath, false);
+            }
+
+            // Write Set Probabilities into excel
+            DataTable dataTableSetProbabilities = new DataTable();
+            dataTableSetProbabilities.Columns.Add("Set Prob.", Type.GetType("System.Double"));
+            for (int u = 0; u < record.bestSolution.setProbabilities.Length; u++)
+            {
+                object[] rowData = new object[1];
+                rowData[0] = (object)record.bestSolution.setProbabilities[u];
+                var row = dataTableSetProbabilities.NewRow();
+                row.ItemArray = rowData;
+                dataTableSetProbabilities.Rows.Add(row);
+            }
+            filePath = rootPath + "setProbabilities.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, false, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, false, filePath, false);
+            }
+
+            // Write total running time into excel
+            DataTable totalRunningTimeTable = new DataTable();
+            totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
+            object[] runningtime = new object[] {record.bestSolution.totalRunTime};
+            var rowRunningTime = totalRunningTimeTable.NewRow();
+            rowRunningTime.ItemArray = runningtime;
+            totalRunningTimeTable.Rows.Add(rowRunningTime);
+            filePath = rootPath + "runningTime.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, false, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, false, filePath, false);
+            }
+        }
+            
         public async static void ExperimentsA(int[] numOfLabelArray, double[][] entropy,string root)
         {
             rootPath = root + @"\";
@@ -72,14 +196,6 @@ namespace GADEApproach
                         recordsRuns[run].goodnessOfFitGen = new double[maxGen];
                         recordsRuns[run].bestSolution = new solution();
                         recordsRuns[run].bestSolution.setProbabilities = new double[numOfLabelArray[i]];
-                        recordsRuns[run].bestSolution.trueTriProbs = new double[numOfLabelArray[i]];
-                        recordsRuns[run].bestSoluionGen = new solution[maxGen];
-                        for (int br = 0; br < maxGen; br++)
-                        {
-                            recordsRuns[run].bestSoluionGen[br] = new solution();
-                            recordsRuns[run].bestSoluionGen[br].setProbabilities = new double[numOfLabelArray[i]];
-                            recordsRuns[run].bestSoluionGen[br].trueTriProbs = new double[numOfLabelArray[i]];
-                        }
                     }
 
                     List<Task> taskList = new List<Task>();
@@ -204,13 +320,6 @@ namespace GADEApproach
                         var row3 = dataTable2.NewRow();
                         row3.ItemArray = rowData3;
                         dataTable2.Rows.Add(row3);
-
-                        //True Triggering Probabilities;
-                        var rowData4 = recordsRuns[k].bestSolution
-                            .trueTriProbs.Select(x => (object)x).ToArray();
-                        var row4 = dataTable2.NewRow();
-                        row4.ItemArray = rowData4;
-                        dataTable2.Rows.Add(row4);
 
                         //Total RunTime
                         object[] rowData5 = new object[1];
