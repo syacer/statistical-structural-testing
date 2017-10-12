@@ -70,6 +70,8 @@ namespace GADEApproach
 
         //SUT Setup
         SUT sut = null;
+        //Linear Programming storage
+        double[] coesArray;
 
         public GALS(int numOfMaxGen, int numLabels, SUT SUT)
         {
@@ -91,61 +93,6 @@ namespace GADEApproach
             public double[] setProbabilities;
             public long totalRunTime;
         }
-
-        public double GoodnessOfFit(Pair<int, double, Pair<int, int, double[]>[]> solution)
-        {
-            Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels - 1);
-            double[] lastCoverElementSet = new double[numOfLabels];
-            Vector<double> bVector = Vector<double>.Build.Dense(expTriProb);
-
-            for (int i = 0; i < numOfLabels; i++)
-            {
-                if (solution.Item2.Where(x => x.Item1 == numOfLabels).Count() == 0)
-                {
-                    Console.WriteLine();
-                }
-                lastCoverElementSet[i] = solution.Item2.Where(x => x.Item1 == numOfLabels).Sum(x => x.Item2[i])
-                    / solution.Item2.Where(x => x.Item1 == numOfLabels).Count();
-            }
-            bVector = bVector.Subtract(Vector<double>.Build.Dense(lastCoverElementSet));
-
-            for (int i = 0; i < numOfLabels; i++)
-            {
-
-                for (int j = 0; j < numOfLabels - 1; j++)
-                {
-                    if (solution.Item2.Where(x => x.Item1 == j + 1).Count() == 0)
-                    {
-                        Console.WriteLine();
-                    }
-                    Amatrix[i, j] = solution.Item2.Where(x => x.Item1 == j + 1).Sum(x => x.Item2[i]);
-                    Amatrix[i, j] /= solution.Item2.Where(x => x.Item1 == j + 1).Count();
-                    Amatrix[i, j] -= lastCoverElementSet[i];
-                }
-            }
-
-            double error = 0;
-            for (int row = 0; row < numOfLabels; row++)
-            {
-                error += Math.Pow((Amatrix.Row(row).ToRowMatrix()
-                    .Multiply(Vector<double>.Build.Dense(coverPointSetProb[solution.Item0])
-                    .SubVector(0, coverPointSetProb[solution.Item0].Length - 1))[0] - bVector[row]), 2);
-            }
-
-            int beta = 1;
-            double[] tempProbs = Copy.DeepCopy(coverPointSetProb[solution.Item0]);
-            tempProbs = tempProbs.Select(x =>
-            {
-                double y = x * -1 - 0;
-                return Math.Pow((Math.Max(0, y)), beta);
-            }).ToArray();
-            double totalInfeasiability = tempProbs.Sum() / numOfLabels;
-            double normalizedCost = error / numOfLabels;
-            double goodnessOfFit = Math.Sqrt(Math.Pow(normalizedCost, 2) + Math.Pow(totalInfeasiability, 2));
-
-            return goodnessOfFit;
-        }
-
         public void AlgorithmStart(record record)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -166,56 +113,9 @@ namespace GADEApproach
                 // Start Recording
                 watch.Stop();
                 var orderedSolutions = pool.OrderByDescending(x => x.Item1);
-                int index = -1;
-                Pair<int, double, Pair<int, int, double[]>[]> bestSolution = null;
-                double[] probabilityset = null;
 
-                for (int i = 0; i < populationSize; i++)
-                {
-                    index = orderedSolutions.ElementAt(i).Item0;
-                    probabilityset = coverPointSetProb[index];
-                    if (probabilityset.All(x => x >= 0))
-                    {
-                        bestSolution = orderedSolutions.ElementAt(i);
-                        break;
-                    }
-                }
-
-                 if (bestSolution == null)
-                {
-                    Console.WriteLine("Current Task ID #{0}",Task.CurrentId);
-                    Console.WriteLine("No Feasiable Solution, # Of negative Values {0}",
-                        coverPointSetProb[orderedSolutions
-                        .First().Item0].Sum(x =>
-                    {
-                        if (x < 0)
-                        {
-                            return Math.Abs(x);
-                        }
-                        else
-                        {
-                            return 0;
-                        }
-                    }));
-                }
-                else
-                {
-                    double[] estTriProbabilities = new double[numOfLabels];
-                    for (int i = 0; i < numOfLabels; i++)
-                    {
-                        double[] triProbsCoverSet = new double[numOfLabels];
-                        for (int j = 0; j < numOfLabels; j++)
-                        {
-                            triProbsCoverSet[j] = bestSolution.Item2.Where(x => x.Item1 == j + 1).Sum(x => x.Item2[i]);
-                            triProbsCoverSet[j] /= bestSolution.Item2.Where(x => x.Item1 == j + 1).Count();
-                        }
-                        estTriProbabilities[i] = Vector<double>.Build.Dense(triProbsCoverSet).ToRowMatrix().
-                            Multiply(Vector<double>.Build.Dense(coverPointSetProb[index]))[0];
-                    }
-                    Console.WriteLine("Estimated Triggering Probabilities {0}", estTriProbabilities.Min());
-                }
-                record.fitnessGen[generation] = 1.0 / orderedSolutions.First().Item1;
-                record.goodnessOfFitGen[generation] = GoodnessOfFit(orderedSolutions.First());
+                record.fitnessGen[generation] = orderedSolutions.First().Item1;
+                record.goodnessOfFitGen[generation] = orderedSolutions.First().Item1;
 
                 Console.WriteLine("Gen #{0} Fitness: {1}",generation, record.goodnessOfFitGen[generation]);
                 watch.Start();
@@ -340,117 +240,83 @@ namespace GADEApproach
                         Amatrix[i, j] -= lastCoverElementSet[i];
                     }
                 }
-                double[] probabilities = Accord.Math.Matrix.Solve(
-                    Amatrix.ToArray(), bVector.ToArray(), leastSquares: true);
+
+                double[] w = new double[numOfLabels - 1];
+                double[,] c = new double[numOfLabels, numOfLabels];
+                int[] ct = new int[numOfLabels]; 
+
+                for (int i = 0; i < numOfLabels - 1; i++)
+                {
+                    w[i] = 1.0 / w.Length;
+                }
+
+                for (int i = 0; i < c.Length / numOfLabels; i++)
+                {
+                    if (i == 0)
+                    {
+                        for (int j = 0; j < numOfLabels; j++)
+                        {
+                            c[i, j] = -1;
+                        }
+                    }
+                    else
+                    {
+                        for (int j = 0; j < numOfLabels; j++)
+                        {
+                            c[i, j] = (i - 1) == j ? 1 : 0;
+                        }
+                    }
+                }
+                for (int i = 0; i < ct.Length; i++)
+                {
+                    ct[i] = 1;
+                }
+                alglib.minbleicstate state;
+                alglib.minbleicreport rep;
+                coesArray = Amatrix.ColumnSums().ToArray();
+                double epsg = 0.000001;
+                double epsf = 0;
+                double epsx = 0;
+                int maxits = 0;
+
+                alglib.minbleiccreate(w, out state);
+                alglib.minbleicsetlc(state, c, ct);
+                alglib.minbleicsetcond(state, epsg, epsf, epsx, maxits);
+                alglib.minbleicoptimize(state, linearFunction_grad, null, null);
+                alglib.minbleicresults(state, out w, out rep);
 
                 double[] probForCESets = new double[numOfLabels];
                 for (int i = 0; i < numOfLabels - 1; i++)
                 {
-                    probForCESets[i] = probabilities[i];
+                    probForCESets[i] = w[i];
                 }
-
                 probForCESets[numOfLabels - 1] = 1 - probForCESets.Sum();
                 coverPointSetProb[k] = Copy.DeepCopy(probForCESets);
-                double error = 0;
-                for (int row = 0; row < numOfLabels; row++)
+
+                double fitness = 0;
+                for (int i = 0; i < w.Length; i++)
                 {
-                    error += Math.Pow((Amatrix.Row(row).ToRowMatrix().Multiply(Vector<double>.Build.Dense(probForCESets).SubVector(0, probForCESets.Length - 1))[0] - bVector[row]), 2);
+                    fitness += w[i] * coesArray[i] - bVector[i];
                 }
-
-                pool[k].Item1 = error;
-            }
-
-            for (int k = 0; k < populationSize; k++)
-            {
-                double adjustFitness = SelfAdaptivePenaltyFunction(coverPointSetProb[k], pool[k].Item1);
-                pool[k].Item1 = 1.0 / adjustFitness;
+                pool[k].Item1 = fitness;
             }
             token[0] = 1;
+            var a = pool[0].Item2.Where(x => x.Item1 == 12).ToList();
             //Console.WriteLine("Fitness Evaluation Done");
         }
-
-        public async void FitnessEvaluation(int[] token)
+        public void linearFunction_grad(double[] x, ref double func, double[] grad, object obj)
         {
-            List<Task> lTasks = new List<Task>();
-            Mutex mutex_K = new Mutex(false, "lockFork");
-            for (int k = 0; k < populationSize;)
+            // this callback calculates f(x0,x1) = 100*(x0+3)^4 + (x1-3)^4
+            // and its derivatives df/d0 and df/dx1
+            //func = 100 * System.Math.Pow(x[0] + 3, 4) + System.Math.Pow(x[1] - 3, 4);
+            func = 0;
+            for (int i = 0; i < x.Length; i++)
             {
-                lTasks.Add(Task.Run(() =>
-                {
-                    mutex_K.WaitOne();
-                    int id = k;
-                    k = k + 1;
-                    mutex_K.ReleaseMutex();
-
-                    //Console.Write("task #{0}", id);
-                    Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels - 1);
-                    double[] lastCoverElementSet = new double[numOfLabels];
-                    Vector<double> bVector = Vector<double>.Build.Dense(expTriProb);
-
-                    for (int i = 0; i < numOfLabels; i++)
-                    {
-                        if (pool[id].Item2.Where(x => x.Item1 == numOfLabels).Count() == 0)
-                        {
-                            Console.WriteLine();
-                        }
-                        lastCoverElementSet[i] = pool[id].Item2.Where(x => x.Item1 == numOfLabels).Sum(x => x.Item2[i])
-                            / pool[id].Item2.Where(x => x.Item1 == numOfLabels).Count();
-                    }
-                    bVector = bVector.Subtract(Vector<double>.Build.Dense(lastCoverElementSet));
-
-                    for (int i = 0; i < numOfLabels; i++)
-                    {
-
-                        for (int j = 0; j < numOfLabels - 1; j++)
-                        {
-                            if (pool[id].Item2.Where(x => x.Item1 == j + 1).Count() == 0)
-                            {
-                                Console.WriteLine();
-                            }
-                            Amatrix[i, j] = pool[id].Item2.Where(x => x.Item1 == j + 1).Sum(x => x.Item2[i]);
-                            Amatrix[i, j] /= pool[id].Item2.Where(x => x.Item1 == j + 1).Count();
-                            Amatrix[i, j] -= lastCoverElementSet[i];
-                        }
-                    }
-                    double[] probabilities = Accord.Math.Matrix.Solve(
-                        Amatrix.ToArray(), bVector.ToArray(), leastSquares: true);
-
-                    double[] probForCESets = new double[numOfLabels];
-                    for (int i = 0; i < numOfLabels - 1; i++)
-                    {
-                        probForCESets[i] = probabilities[i];
-                    }
-
-                    probForCESets[numOfLabels - 1] = 1 - probForCESets.Sum();
-                    coverPointSetProb[id] = Copy.DeepCopy(probForCESets);
-                    double error = 0;
-                    for (int row = 0; row < numOfLabels; row++)
-                    {
-                        error += Math.Pow((Amatrix.Row(row).ToRowMatrix().Multiply(Vector<double>.Build.Dense(probForCESets).SubVector(0, probForCESets.Length - 1))[0] - bVector[row]), 2);
-                    }
-
-                    pool[id].Item1 = error;
-                }));
-
-                if (lTasks.Count == numberOfConcurrentTasks || (populationSize - k - 1 < numberOfConcurrentTasks))  
-                {
-                    for (int i = 0; i < lTasks.Count; i++)
-                    {
-                        await lTasks[i];
-                    }
-                    lTasks.Clear();
-                }
+                func += -1 * x[i] * coesArray[i];
+                grad[i] = -1 * coesArray[i];
             }
-
-            for (int k = 0; k < populationSize; k++)
-            {
-                double adjustFitness = SelfAdaptivePenaltyFunction(coverPointSetProb[k], pool[k].Item1);
-                pool[k].Item1 = 1.0 / adjustFitness;
-            }
-
-            token[0] = 1;
-            //Console.WriteLine("Fitness Evaluation Done");
         }
+
         Pair<int,int,double[]>[] TwoPointCrossOver(Pair<int, int, double[]>[] s1, Pair<int, int, double[]>[] s2)
         {
            var a1 = s1.Select(x => x.Item1).ToList();

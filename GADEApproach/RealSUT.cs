@@ -41,8 +41,6 @@ namespace GADEApproach
         }
         public void sutBestMove()
         {
-            Dictionary<string, int> pathStorage
-                 = new Dictionary<string, int>();
             numOfMinIntervalX = 32;
             numOfMinIntervalY = 32;
             int minIntervalX = 512 / numOfMinIntervalX;
@@ -62,9 +60,9 @@ namespace GADEApproach
                 int ylowBoundIndex = (i / numOfMinIntervalY) * minIntervalY;
                 int sampleSize = (int)(minIntervalX * minIntervalY * sampleProbability);
                 readBranch rbce = new readBranch();
-                List<string> paths = new List<string>();
                 int count = 0;
                 List<int[]> generatedList = new List<int[]>();
+                int[] countsArray = new int[numOfLabels];
                 while (count < sampleSize)
                 {
                     int x = GlobalVar.rnd.Next(xlowBoundIndex, xlowBoundIndex + minIntervalX);
@@ -76,42 +74,26 @@ namespace GADEApproach
                         int[] inputs = new int[2] { x, y };
                         int[] outputs = null;
                         rbce.ReadBranchCLIFunc(inputs, ref outputs, 3);
-                        string path = null;
-                        foreach (int e in outputs)
+                        for (int k = 0; k < numOfLabels; k++)
                         {
-                            path = path + e.ToString();
-                        }
-                        paths.Add(path);
-                        if (!pathStorage.ContainsKey(path))
-                        {
-                            int newValue = -1;
-                            if (pathStorage.Count == 0)
-                            {
-                                newValue = 0;
-                            }
-                            else
-                            {
-                                newValue = pathStorage.Values.Max() + 1;
-                            }
-                            pathStorage.Add(path, newValue);
+                            countsArray[k] += outputs[k] == 1 ? 1 : 0;
                         }
                     }
                 }
                 double[] triggeringProbilities = new double[numOfLabels];
-                var distinctPaths = paths.Distinct().ToList();
-                for (int o = 0; o < distinctPaths.Count; o++)
+                for (int k = 0; k < triggeringProbilities.Length; k++)
                 {
-                    double triProb = paths.Where(x => x == distinctPaths[o]).Count() * 1.0 / sampleSize;
-                    int value = pathStorage.ContainsKey(distinctPaths[o]) ?
-                        pathStorage[distinctPaths[o]] : -1;
-                    if (value == -1)
-                    {
-                        Console.WriteLine("pathStorage WRONG");
-                    }
-                    triggeringProbilities[value] = triProb;
+                    triggeringProbilities[k] = countsArray[k] * 1.0 / sampleSize;
                 }
                 bins[i].Item2 = triggeringProbilities;
             }
+
+            var b = bins.Where(x => x.Item2[14] != 0);
+            var o = bins.Where(x => x.Item2[17] != 0);
+            var d = bins.Where(x => x.Item2[33] != 0);
+            var e = bins.Where(x => x.Item2[37] != 0);
+            var f = bins.Where(x => x.Item2[40] != 0);
+            var g = bins.Where(x => x.Item2[41] != 0);
         }
     }
 }
