@@ -76,6 +76,8 @@ namespace GADEApproach
             // Real SUT
             RealSUT bestMove = new RealSUT();
             bestMove.sutBestMove(); // Setup triggering probabilities in bins
+                                    //Write bins triggering prob into excel
+
             GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove);
 
             record record = new record();
@@ -108,6 +110,30 @@ namespace GADEApproach
             else
             {
                 ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath, false);
+            }
+
+            //Write bins triggering prob into excel
+            DataTable dataTablebinsTriProb = new DataTable();
+            for (int u = 0; u < bestMove.numOfLabels; u++)
+            {
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < bestMove.bins.Length; u++)
+            {
+                object[] rowData = null;
+                rowData = bestMove.bins[u].Item2.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+            filePath = rootPath + "triInBins.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, false, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, false, filePath, false);
             }
 
             //Write bins setup into excel

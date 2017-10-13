@@ -57,7 +57,7 @@ namespace GADEApproach
                 Dictionary<string, string> props = new Dictionary<string, string>();
 
                 // XLSX - Excel 2007, 2010, 2012, 2013
-                props["Provider"] = "Microsoft.ACE.OLEDB.16.0;";
+                props["Provider"] = "Microsoft.ACE.OLEDB.12.0;";
                 props["Extended Properties"] = "Excel 12.0 XML";
                 props["Data Source"] = excelPath;
 

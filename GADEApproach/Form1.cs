@@ -119,15 +119,14 @@ namespace GADEApproach
 
         private void button5_Click(object sender, EventArgs e)
         {
-            MathNet.Numerics.LinearAlgebra.Matrix<double> aMatrix =
-                MathNet.Numerics.LinearAlgebra.Matrix<double>.Build.Dense(2,2);
-            aMatrix[0, 0] = 0.2;
-            aMatrix[0, 1] = 0.3;
-            aMatrix[1, 0] = 0.8;
-            aMatrix[1, 1] = 0.7;
-            double[] expTriProb = new double[2] {0.7,0.3 };
-            SolverCLP.objFuncDel fAndcDel = new ObjectiveFunctions(aMatrix, expTriProb).objectFuncQHStyle;
-            var s2 = SolverCLP.solver(fAndcDel);
+            Task.Run(() =>
+            {
+                var aMatrixandExpProbs = SolverCLP.GenerateAMatrixExpTribProbFromExcel();
+                SolverCLP.objFuncDel fAndcDel = new ObjectiveFunctions(
+                    aMatrixandExpProbs.Item1, aMatrixandExpProbs.Item2).objectFuncQHStyle;
+                var s2 = SolverCLP.solver(fAndcDel);
+                Console.ReadKey();
+            });
         }
 
         private void button6_Click(object sender, EventArgs e)
