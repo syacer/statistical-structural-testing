@@ -122,9 +122,14 @@ namespace GADEApproach
             Task.Run(() =>
             {
                 var aMatrixandExpProbs = SolverCLP.GenerateAMatrixExpTribProbFromExcel();
-                SolverCLP.objFuncDel fAndcDel = new ObjectiveFunctions(
-                    aMatrixandExpProbs.Item1, aMatrixandExpProbs.Item2).objectFuncQHStyle;
-                var s2 = SolverCLP.solver(fAndcDel);
+                var s2 = SolverCLP.solver2(aMatrixandExpProbs.Item1,aMatrixandExpProbs.Item2);
+                SolverCLP.WriteFinalSolutionToExcel(
+                    aMatrixandExpProbs.Item3,
+                    s2.Item1,
+                    aMatrixandExpProbs.Item1
+                );
+                TestDataGeneration.testDataGenerationBestMove(Convert.ToInt32(textBox2.Text));
+                Console.WriteLine("Finish");
                 Console.ReadKey();
             });
         }
@@ -137,6 +142,21 @@ namespace GADEApproach
         private void button7_Click(object sender, EventArgs e)
         {
             Task.Run(() => Experiments.nsichneuExperimentsB());
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button8_Click(object sender, EventArgs e)
+        {
+            PathCounts.CountPath();
+        }
+
+        private void button9_Click(object sender, EventArgs e)
+        {
+            Task.Run(() => { TestDataGeneration.pureRandomTestSet(); });
         }
     }
 }

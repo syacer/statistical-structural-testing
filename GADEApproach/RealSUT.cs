@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ReadSUTBranchCEData;
+using System.Data;
 
 namespace GADEApproach
 {
@@ -94,6 +95,35 @@ namespace GADEApproach
             var e = bins.Where(x => x.Item2[37] != 0);
             var f = bins.Where(x => x.Item2[40] != 0);
             var g = bins.Where(x => x.Item2[41] != 0);
+        }
+        public DataTable MapTestInputsToBinsBestMove()
+        {
+            DataTable InputsBinTable = new DataTable();
+            InputsBinTable.Columns.Add("Input x", Type.GetType("System.Int32"));
+            InputsBinTable.Columns.Add("Input y", Type.GetType("System.Int32"));
+            InputsBinTable.Columns.Add("IntentionallyBlank", Type.GetType("System.Int32"));
+            InputsBinTable.Columns.Add("BinIndexFrom1", Type.GetType("System.Int32"));
+
+            int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
+            for (int i = 0; i < totalNumberOfBins; i++)
+            {
+                Tuple<int, int> indexs = Calxyindex(i);
+                double deltaX = (highbounds[0] - lowbounds[0] + 1) / numOfMinIntervalX;
+                double deltaY = (highbounds[1] - lowbounds[1] + 1) / numOfMinIntervalY;
+                int lowX = (int)deltaX * indexs.Item1;
+                int lowY = (int)deltaY * indexs.Item2;
+                for (int x = lowX; x < lowX + deltaX; x++)
+                {
+                    for (int y = lowY; y < lowY + deltaY; y++)
+                    {
+                        object[] rowData = new object[] { x, y, -9999999, i+1};
+                        var row = InputsBinTable.NewRow();
+                        row.ItemArray = rowData;
+                        InputsBinTable.Rows.Add(row);
+                    }
+                }
+            }
+            return InputsBinTable;
         }
     }
 }

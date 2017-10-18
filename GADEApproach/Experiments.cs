@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -72,7 +73,7 @@ namespace GADEApproach
         public static void BestMoveExperimentsB()
         {
             rootPath = @"C:\Users\shiya\Desktop\realSUT\bestMove\";
-            maxGen = 3000;
+            maxGen = 5000;
             // Real SUT
             RealSUT bestMove = new RealSUT();
             bestMove.sutBestMove(); // Setup triggering probabilities in bins
@@ -105,11 +106,11 @@ namespace GADEApproach
             string filePath = rootPath + "fitnesses.xlsx";
             if (!File.Exists(filePath))
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath, true);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
             }
             else
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath, false);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
             }
 
             //Write bins triggering prob into excel
@@ -129,11 +130,11 @@ namespace GADEApproach
             filePath = rootPath + "triInBins.xlsx";
             if (!File.Exists(filePath))
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, false, filePath, true);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
             }
             else
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, false, filePath, false);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
             }
 
             //Write bins setup into excel
@@ -150,11 +151,11 @@ namespace GADEApproach
             filePath = rootPath + "binsSetup.xlsx";
             if (!File.Exists(filePath))
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, false, filePath, true);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, true);
             }
             else
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, false, filePath, false);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
             }
 
             // Write Set Probabilities into excel
@@ -171,11 +172,11 @@ namespace GADEApproach
             filePath = rootPath + "setProbabilities.xlsx";
             if (!File.Exists(filePath))
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, false, filePath, true);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, true, filePath, true);
             }
             else
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, false, filePath, false);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, true, filePath, false);
             }
 
             // Write total running time into excel
@@ -188,11 +189,23 @@ namespace GADEApproach
             filePath = rootPath + "runningTime.xlsx";
             if (!File.Exists(filePath))
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, false, filePath, true);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, true);
+            }
+            else
+            { 
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
+            }
+
+            // Write InputsBin Mapping to Excel
+            filePath = rootPath + "inputsBin.xlsx";
+            DataTable InputsBinTable = bestMove.MapTestInputsToBinsBestMove();
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { InputsBinTable }, true, filePath, true);
             }
             else
             {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, false, filePath, false);
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { InputsBinTable }, true, filePath, false);
             }
         }
             
@@ -313,7 +326,7 @@ namespace GADEApproach
                     {
                         File.Delete(filePath);
                     }
-                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, false, filePath,true);
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath,true);
 
                     //Write solution to Excel
                     //Input label mapping
@@ -358,11 +371,11 @@ namespace GADEApproach
 
                         if (!File.Exists(filePath))
                         {
-                            ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable2 }, false, filePath, true);
+                            ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable2 }, true, filePath, true);
                         }
                         else
                         {
-                            ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable2 }, false, filePath, false);
+                            ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable2 }, true, filePath, false);
                         }
                     }
                 }

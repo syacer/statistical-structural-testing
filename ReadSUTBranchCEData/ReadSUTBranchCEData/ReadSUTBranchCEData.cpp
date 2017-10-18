@@ -32,7 +32,8 @@ namespace ReadSUTBranchCEData {
 		else if (selectSUT == 3)
 		{
 			BestMoveSUT mySUT;
-			mySUT.BestMove(inputs[0], inputs[1], pp);
+			int ret = mySUT.BestMove(inputs[0], inputs[1], pp);
+			Console::WriteLine(ret);
 		}
 		else if (selectSUT == 4)
 		{

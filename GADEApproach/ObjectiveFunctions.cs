@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Accord.Math.Decompositions;
 
 namespace GADEApproach
 {
@@ -22,14 +23,14 @@ namespace GADEApproach
         {
 
             List<LinearConstraint> list = new List<LinearConstraint>();
-            list.Add(new LinearConstraint(numberOfVariables: _aMatrix.RowCount)
+            list.Add(new LinearConstraint(numberOfVariables: _aMatrix.ColumnCount)
             {
-                VariablesAtIndices = new int[_aMatrix.RowCount].Select((x,i)=>x=i).ToArray(),
-                CombinedAs = new double[_aMatrix.RowCount].Select(x=>x=1).ToArray(), // when combined as 1x + 1y...
+                VariablesAtIndices = new int[_aMatrix.ColumnCount].Select((x,i)=>x=i).ToArray(),
+                CombinedAs = new double[_aMatrix.ColumnCount].Select(x=>x=1).ToArray(), // when combined as 1x + 1y...
                 ShouldBe = ConstraintType.EqualTo,
                 Value = 1
             });
-            for (int i = 0; i < _aMatrix.RowCount; i++)
+            for (int i = 0; i < _aMatrix.ColumnCount; i++)
             {
                 list.Add(new LinearConstraint(numberOfVariables: 1)
                 {
@@ -42,32 +43,22 @@ namespace GADEApproach
         }
         public Tuple<QuadraticObjectiveFunction, List<LinearConstraint>> objectFuncQHStyle()
         {
-            Matrix<double> QMatrix = Matrix<double>.Build.Dense(_aMatrix.RowCount, _aMatrix.RowCount);
-            Vector<double> HVector = Vector<double>.Build.Dense(_aMatrix.RowCount);
-
-            for (int r = 0; r < _aMatrix.RowCount; r++)
-            {
-                Matrix<double> Q = Matrix<double>.Build.Dense(_aMatrix.RowCount, _aMatrix.RowCount);
-                Vector<double> H = Vector<double>.Build.Dense(_aMatrix.RowCount);
-                for (int c1 = 0; c1 < _aMatrix.RowCount; c1++)
-                {
-                    for (int c2 = 0; c2 < _aMatrix.RowCount; c2++)
-                    {
-                        Q[c1, c2] = 2 * _aMatrix[r,c1] * _aMatrix[r,c2];
-                    }
-                    H[c1] = -2 * _aMatrix[r, c1] * _expTrigProb[r];
-                }
-                HVector = HVector.Add(H);
-                QMatrix = QMatrix.Add(Q);
-            }
-            string[] variablesName = new string[_aMatrix.RowCount];
+            Matrix <double>  QMatrix = _aMatrix.TransposeThisAndMultiply(_aMatrix);
+            EigenvalueDecomposition ed = new EigenvalueDecomposition(QMatrix.ToArray());
+            var c = ed.DiagonalMatrix;
+            var a = QMatrix.Inverse();
+            Vector<double>  HVector = Vector<double>.Build.Dense(_expTrigProb).ToRowMatrix().Multiply(_aMatrix).Row(0);
+            double S = (Vector<double>.Build.Dense(_expTrigProb).ToRowMatrix()
+                       * Vector<double>.Build.Dense(_expTrigProb))[0];
+            int rank = QMatrix.Rank();
+            string[] variablesName = new string[_aMatrix.ColumnCount];
             for (int i = 0; i < variablesName.Length; i++)
             {
                 variablesName[i] = "x" + i.ToString();
             }
             QuadraticObjectiveFunction f = new QuadraticObjectiveFunction
                 (QMatrix.ToArray(),HVector.ToArray(), variablesName);
-            f.ConstantTerm = _expTrigProb.Sum(x=>x*x);
+            f.ConstantTerm = S;
             List<LinearConstraint> constraints = ConstraintConstruct();
             return new Tuple<QuadraticObjectiveFunction, List<LinearConstraint>>(item1: f, item2: constraints);
         }

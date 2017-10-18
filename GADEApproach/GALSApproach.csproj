@@ -90,6 +90,9 @@
       <HintPath>..\packages\Accord.Math.3.7.0\lib\net45\Accord.Math.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="alglibnet2">
+      <HintPath>.\alglibnet2.dll</HintPath>
+    </Reference>
     <Reference Include="MathNet.Numerics, Version=3.20.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.3.20.0\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>
@@ -122,6 +125,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConvertInvertibleAMatrix.cs" />
     <Compile Include="Copy.cs" />
     <Compile Include="DE.cs" />
     <Compile Include="ExcelOperation.cs" />
@@ -136,13 +140,16 @@
     <Compile Include="GlobalVar.cs" />
     <Compile Include="LocalFileAccess.cs" />
     <Compile Include="ObjectiveFunctions.cs" />
+    <Compile Include="PathCounts.cs" />
     <Compile Include="ProcessingExcels.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QP.cs" />
     <Compile Include="RealSUT.cs" />
     <Compile Include="SolverCLP.cs" />
     <Compile Include="SUT.cs" />
     <Compile Include="SyntheticSUT.cs" />
+    <Compile Include="TestDataGeneration.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

@@ -31,7 +31,7 @@ namespace GADEApproach
                     {
                         string sheetName = dr["TABLE_NAME"].ToString();
 
-                        if (!sheetName.EndsWith("$"))
+                        if (!sheetName.Contains("$"))
                             continue;
 
                         // Get all rows from the Sheet
