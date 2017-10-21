@@ -93,30 +93,6 @@ namespace GADEApproach
             }
             return new Tuple<double[], double>(item1:solution,item2:value);
         }
-        public static Tuple<Matrix<double>,double[],int[]> GenerateAMatrixExpTribProbFromExcel()
-        {
-            Matrix<double> PrimalAMatrix = null;
-            double[] expTriProbAry = new double[numOfLabels];
-            int[] newBinsinSets = null;
-            for (int i = 0; i < numOfLabels; i++)
-            {
-                expTriProbAry[i] = 1.0 / numOfLabels;
-            }
-
-            DataTable dt = ExcelOperation.ReadExcelFile(excelPathBinSetup).Tables[1];
-            
-            int[] binOfSetsIndex = dt.AsEnumerable().Select(x => Convert.ToInt32(x.ItemArray[0])).ToArray();
-            DataTable dt2 = ExcelOperation.ReadExcelFile(excelPathbinTrig).Tables[1];
-            double[][] binsSetup = new double[dt2.Rows.Count][];
-            for (int i = 0; i < dt2.Rows.Count; i++)
-            {
-                binsSetup[i] = dt2.Rows[i].ItemArray.Select(x=>Convert.ToDouble(x)).ToArray();
-            }
-            ConvertInvertibleAMatrix.CreateInvertibleAMatrix(ref PrimalAMatrix,binOfSetsIndex,binsSetup, out newBinsinSets, numOfLabels);
-            int rank = PrimalAMatrix.Rank();
-            
-            return new Tuple<Matrix<double>, double[], int[]>(item1: PrimalAMatrix, item2: expTriProbAry, item3: newBinsinSets);
-        }
         public static Tuple<QuadraticObjectiveFunction, List<LinearConstraint>> objectiveFuncForLabelTest()
         {   
             // x1, x2    Pl
@@ -131,10 +107,17 @@ namespace GADEApproach
             return new Tuple<QuadraticObjectiveFunction, List<LinearConstraint>> (item1:f,item2: new List<LinearConstraint>());
         }
 
-        static public void WriteFinalSolutionToExcel(int[] newBinsSetup, double[] weights, Matrix<double> AMatrix)
+        static public DataTable WriteFinalSolutionToExcel(DataTable inputsBinDt, int[] newBinsSetup, double[] weights, Matrix<double> AMatrix)
         {
             SUT sut = new SUT();
+            if (weights == null)    // using linear programming for branch coverage, weights remain the same, copy setProbilities.xlsx
+            {
+                string filePath = rootpath + @"setProbabilities.xlsx";
+                var weightDt = ExcelOperation.ReadExcelFile(filePath).Tables[1];
+                weights = weightDt.AsEnumerable().Select(x => Convert.ToDouble(x.ItemArray[0])).ToArray();
+            }
             DataSet ds = FinalResultsinDataTables(
+                inputsBinDt,
                 newBinsSetup, 
                 weights, 
                 AMatrix,
@@ -143,8 +126,13 @@ namespace GADEApproach
                 @"TrigProbEst",
                 @"TrigProbTrue"
                 );
+
             for (int i = 0; i < ds.Tables.Count; i++)
             {
+                if (i == 0)
+                {
+                    continue;
+                }
                 string excelName = ds.Tables[i].TableName + ".xlsx";
                 if (!File.Exists(rootpath + excelName))
                 {
@@ -165,9 +153,11 @@ namespace GADEApproach
                             );
                 }
             }
+            return ds.Tables["InputSetMap"];
         }
 
-        private static DataSet FinalResultsinDataTables(
+        public static DataSet FinalResultsinDataTables(
+            DataTable inputsBinDt,
             int[] newBinsSetup, 
             double[] weights, 
             Matrix<double> aMatrix, 
@@ -181,7 +171,15 @@ namespace GADEApproach
             // Add InputSetMap to DataTable
             ds.Tables.Add(InputSetMap);
             string tablePath = rootpath + "inputsBin.xlsx";
-            DataTable dt = ExcelOperation.ReadExcelFile(tablePath).Tables[1];
+            DataTable dt = null;
+            if (inputsBinDt == null)
+            {
+                dt = ExcelOperation.ReadExcelFile(tablePath).Tables[1];
+            }
+            else
+            {
+                dt = inputsBinDt;
+            }
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 List<int> dataRowInputSet = new List<int>();

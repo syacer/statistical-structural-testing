@@ -55,8 +55,8 @@ namespace GADEApproach
             for (int i = 0; i < totalNumberOfBins; i++)
             {
                 bins[i] = new Pair<int, int, double[]>();
-                bins[i].Item0 = i;
-                bins[i].Item1 = -1;
+                bins[i].BinIndex = i;
+                bins[i].SetIndexPlus1 = -1;
                 int xlowBoundIndex = (i % numOfMinIntervalX) * minIntervalX;
                 int ylowBoundIndex = (i / numOfMinIntervalY) * minIntervalY;
                 int sampleSize = (int)(minIntervalX * minIntervalY * sampleProbability);
@@ -86,15 +86,15 @@ namespace GADEApproach
                 {
                     triggeringProbilities[k] = countsArray[k] * 1.0 / sampleSize;
                 }
-                bins[i].Item2 = triggeringProbilities;
+                bins[i].ProbInBins = triggeringProbilities;
             }
 
-            var b = bins.Where(x => x.Item2[14] != 0);
-            var o = bins.Where(x => x.Item2[17] != 0);
-            var d = bins.Where(x => x.Item2[33] != 0);
-            var e = bins.Where(x => x.Item2[37] != 0);
-            var f = bins.Where(x => x.Item2[40] != 0);
-            var g = bins.Where(x => x.Item2[41] != 0);
+            var b = bins.Where(x => x.ProbInBins[14] != 0);
+            var o = bins.Where(x => x.ProbInBins[17] != 0);
+            var d = bins.Where(x => x.ProbInBins[33] != 0);
+            var e = bins.Where(x => x.ProbInBins[37] != 0);
+            var f = bins.Where(x => x.ProbInBins[40] != 0);
+            var g = bins.Where(x => x.ProbInBins[41] != 0);
         }
         public DataTable MapTestInputsToBinsBestMove()
         {

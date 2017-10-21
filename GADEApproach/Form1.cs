@@ -20,6 +20,8 @@ namespace GADEApproach
         bool inputSimulatorOn = false;
         bool keyState = false;
         LocalFileAccess lfa;
+        DataTable inputsBinDt = null;
+
         public Form1()
         {
             InitializeComponent();
@@ -36,7 +38,7 @@ namespace GADEApproach
                 File.Create(rootPath + @"\" + Environment.MachineName).Close();
             }
             timer2.Enabled = true;
-            Task.Run(() => Experiments.ExperimentsA(numOfLablesArray.ToArray(),entropyPropotionArray.ToArray(), rootPath));
+            Task.Run(() => new Experiments().ExperimentsA(numOfLablesArray.ToArray(), entropyPropotionArray.ToArray(), rootPath));
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -69,14 +71,14 @@ namespace GADEApproach
 
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                 {
-                    rootPath = fbd.SelectedPath;
+                    rootPath = fbd.SelectedPath + @"\";
                 }
                 else
                 {
                     System.Windows.Forms.MessageBox.Show("Invalid Folder");
                 }
             }
-            label1.Text = rootPath;
+            textBox4.Text = rootPath;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -117,31 +119,9 @@ namespace GADEApproach
                 new List<string>() { "I am alive #" + DateTime.Now.ToString() });
         }
 
-        private void button5_Click(object sender, EventArgs e)
-        {
-            Task.Run(() =>
-            {
-                var aMatrixandExpProbs = SolverCLP.GenerateAMatrixExpTribProbFromExcel();
-                var s2 = SolverCLP.solver2(aMatrixandExpProbs.Item1,aMatrixandExpProbs.Item2);
-                SolverCLP.WriteFinalSolutionToExcel(
-                    aMatrixandExpProbs.Item3,
-                    s2.Item1,
-                    aMatrixandExpProbs.Item1
-                );
-                TestDataGeneration.testDataGenerationBestMove(Convert.ToInt32(textBox2.Text));
-                Console.WriteLine("Finish");
-                Console.ReadKey();
-            });
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
-            Task.Run(() => Experiments.BestMoveExperimentsB());
-        }
-
         private void button7_Click(object sender, EventArgs e)
         {
-            Task.Run(() => Experiments.nsichneuExperimentsB());
+            Task.Run(() => new Experiments().nsichneuExperimentsB());
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
@@ -156,7 +136,32 @@ namespace GADEApproach
 
         private void button9_Click(object sender, EventArgs e)
         {
-            Task.Run(() => { TestDataGeneration.pureRandomTestSet(); });
+            Task.Run(() => { new TestDataGeneration(
+                rootPath,
+                null,
+                Convert.ToInt32(textBox2.Text),
+                null
+            ).BestMoveRandomTestSet(); });
+        }
+
+        private void button10_Click(object sender, EventArgs e)
+        {
+            Task.Run(()=>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath,true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().BestMoveExperimentsB(rootPath, Convert.ToInt32(textBox2.Text), Convert.ToInt32(textBox5.Text));
+                }
+                Console.WriteLine("Finish");
+            });
         }
     }
 }

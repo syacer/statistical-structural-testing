@@ -1,55 +1,64 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace GADEApproach
 {
-    static class TestDataGeneration
-    {        
-        static string functionName = "NULL";
-        static string testdataFilePath = SolverCLP.rootpath + @"testData";
-        static string weightExcelPath = SolverCLP.excelPathWeights;
-        static string InputSetMapExcelPath = SolverCLP.excelPathInputSetMap;
+    class TestDataGeneration
+    {
+        string _testdataFilePath = null;
+        DataTable _inputSetMapDt = null;
+        int _testSize = 0;
+        double[] _SetProbAry = null;
 
-        static public void fulltest()
+        public TestDataGeneration(
+            string testdataFilePath,
+            DataTable inputSetMapDt,
+            int testSize,
+            double[] SetProbAry)
+        {
+
+            _testdataFilePath = testdataFilePath;
+            _inputSetMapDt = inputSetMapDt;
+            _testSize = testSize;
+            _SetProbAry = SetProbAry;
+        }
+        public void fulltest()
         {
             for (int i = 0; i < 512; i++)
             {
                 for (int j = 0; j < 512; j++)
                 {
-                    testFileForMiLu("bestMove",i*512+j,new int[] {i,j },testdataFilePath);
+                    testFileForMiLu("bestMove",i*512+j,new int[] {i,j }, _testdataFilePath);
                 }
             }
         }
         // TestDataGenerationA is intended for input domian space < 262144
-        static public void testDataGenerationBestMove(
-            int numOfTestCases)
+        public void testDataGenerationBestMove()
         {
             string stra = SolverCLP.rootpath.Remove(SolverCLP.rootpath.Length - 1, 1);
             string functionName = stra.Substring(stra.LastIndexOf(@"\") + 1);
 
-            var inputSetMapDt = ExcelOperation.ReadExcelFile(InputSetMapExcelPath+".xlsx").Tables[1];
             List<object[]> inputSetMap = new List<object[]>();
             List<int[]> storedInputs = new List<int[]>();
 
-            for (int i = 0; i < inputSetMapDt.Rows.Count; i++)
+            for (int i = 0; i < _inputSetMapDt.Rows.Count; i++)
             {
-                inputSetMap.Add(inputSetMapDt.Rows[i].ItemArray);
+                inputSetMap.Add(_inputSetMapDt.Rows[i].ItemArray);
             }
 
-            var weightDt = ExcelOperation.ReadExcelFile(weightExcelPath+".xlsx").Tables[1];
-            double[] AccumulateSetProbArray = new double[weightDt.Rows.Count];
-            for (int i = 0; i < weightDt.Rows.Count; i++)
+            double[] AccumulateSetProbArray = new double[_SetProbAry.Length];
+            for (int i = 0; i < _SetProbAry.Length; i++)
             {
                 double previous = i == 0 ? 0 : AccumulateSetProbArray[i - 1];
-                AccumulateSetProbArray[i] = (double)weightDt.Rows[i].ItemArray[0]
-                    + previous;
+                AccumulateSetProbArray[i] = _SetProbAry[i]+ previous;
             }
 
             int retries = 0;
-            while (storedInputs.Count < numOfTestCases)
+            while (storedInputs.Count < _testSize)
             {
                 double rnd = GlobalVar.rnd.NextDouble();
                 int setNum = -1;
@@ -89,7 +98,7 @@ namespace GADEApproach
                 if (storedInputs.Where(x => x.SequenceEqual(inputList.ToArray()) == true).Count() == 0)
                 {
                     storedInputs.Add(inputList.ToArray());
-                    testFileForMiLu(functionName, storedInputs.Count() - 1, inputList.ToArray(), testdataFilePath);
+                    testFileForMiLu(functionName, storedInputs.Count() - 1, inputList.ToArray(), _testdataFilePath);
                     retries = 0;
                     Console.WriteLine("Num Of Test cases: {0}", storedInputs.Count);
                 }
@@ -109,9 +118,8 @@ namespace GADEApproach
 
         }
 
-        static public void pureRandomTestSet()
+        public void BestMoveRandomTestSet()
         {
-            int count = 0;
             List<int[]> dataSet = new List<int[]>();
             while (dataSet.Count < 1000)
             {
@@ -121,11 +129,11 @@ namespace GADEApproach
                 if (dataSet.Where(k => k.SequenceEqual(newData)).Count() == 0)
                 {
                     dataSet.Add(newData);
-                    testFileForMiLu("bestMove", dataSet.Count, new int[] { x, y }, testdataFilePath);
+                    testFileForMiLu("bestMove", dataSet.Count, new int[] { x, y }, _testdataFilePath);
                 }
             }
         }
-        static public void testFileForMiLu(string functionName, int i, int[] inputsAry, string path)
+        public void testFileForMiLu(string functionName, int i, int[] inputsAry, string path)
         {
             LocalFileAccess lfa = new LocalFileAccess();
             string str1 = string.Format(@"int test_{0}_{1}() {{return {0}(",functionName,i);

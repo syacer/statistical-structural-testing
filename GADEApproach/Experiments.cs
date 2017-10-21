@@ -11,14 +11,14 @@ using static GADEApproach.GALS;
 
 namespace GADEApproach
 {
-    public static class Experiments
+    public class Experiments
     {
-        static int maxGen = 200;
-        static int runTimes = 20;
-        static string rootPath = @"C:\Users\shiya\Desktop\recordTEST\";
-        static int numberOfConcurrentTasks = 7;
+         public int maxGen = 200;
+         public int runTimes = 20;
+         public string rootPath = @"C:\Users\shiya\Desktop\recordTEST\";
+         public int numberOfConcurrentTasks = 7;
         
-        public static void nsichneuExperimentsB()
+        public void nsichneuExperimentsB()
         {
             // inputs: xxx|xxxxx|000000|
             ReadSUTBranchCEData.readBranch rbce = new ReadSUTBranchCEData.readBranch();
@@ -70,25 +70,75 @@ namespace GADEApproach
             var distinctOutputs = outputs.Distinct();
 
         }
-        public static void BestMoveExperimentsB()
+        public void BestMoveExperimentsB(string rootpath, int numOfTestCases, int imFactor)
         {
-            rootPath = @"C:\Users\shiya\Desktop\realSUT\bestMove\";
+            rootPath = rootpath;
+            string testInputsFilePath = rootpath + @"testData";
             maxGen = 5000;
+
             // Real SUT
             RealSUT bestMove = new RealSUT();
             bestMove.sutBestMove(); // Setup triggering probabilities in bins
                                     //Write bins triggering prob into excel
 
-            GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove);
+            GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove,imFactor);
 
             record record = new record();
             record.fitnessGen = new double[maxGen];
-            record.goodnessOfFitGen = new double[maxGen];
+            record.probLowBoundGen = new double[maxGen];
             record.bestSolution = new solution();
 
             gals.ExpectedTriggeringProbSetUp();
             gals.GAInitialization();
             gals.AlgorithmStart(record);
+
+            DataTable InputsBinTable = bestMove.MapTestInputsToBinsBestMove();
+            DataSet ds = SolverCLP.FinalResultsinDataTables(
+                InputsBinTable,
+                record.bestSolution.binSetup,
+                record.bestSolution.setProbabilities,
+                record.bestSolution.Amatrix,
+                @"InputSetMap",
+                @"Weights",
+                @"TrigProbEst",
+                @"TrigProbTrue"
+                );
+
+            // Write InputsBin Mapping to Excel
+            TestDataGeneration tdg = new TestDataGeneration(
+                testInputsFilePath,
+                ds.Tables[0],
+                numOfTestCases,
+                record.bestSolution.setProbabilities
+                );
+            tdg.testDataGenerationBestMove();
+
+            for (int i = 0; i < ds.Tables.Count; i++)
+            {
+                if (i == 0)
+                {   // ignore the inputSetMap table
+                    continue;
+                }
+                string excelName = ds.Tables[i].TableName + ".xlsx";
+                if (!File.Exists(rootpath + excelName))
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            true
+                            );
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            false
+                            );
+                }
+            }
 
             //Write adjusted and overall fitnesses into excel
             DataTable dataTable = new DataTable();
@@ -98,7 +148,7 @@ namespace GADEApproach
             {
                 object[] rowData = new object[2];
                 rowData[0] = (object)record.fitnessGen[u];
-                rowData[1] = (object)record.goodnessOfFitGen[u];
+                rowData[1] = (object)record.probLowBoundGen[u];
                 var row = dataTable.NewRow();
                 row.ItemArray = rowData;
                 dataTable.Rows.Add(row);
@@ -122,7 +172,7 @@ namespace GADEApproach
             for (int u = 0; u < bestMove.bins.Length; u++)
             {
                 object[] rowData = null;
-                rowData = bestMove.bins[u].Item2.Select(x => (object)x).ToArray();
+                rowData = bestMove.bins[u].ProbInBins.Select(x => (object)x).ToArray();
                 var row = dataTablebinsTriProb.NewRow();
                 row.ItemArray = rowData;
                 dataTablebinsTriProb.Rows.Add(row);
@@ -158,27 +208,6 @@ namespace GADEApproach
                 ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
             }
 
-            // Write Set Probabilities into excel
-            DataTable dataTableSetProbabilities = new DataTable();
-            dataTableSetProbabilities.Columns.Add("Set Prob.", Type.GetType("System.Double"));
-            for (int u = 0; u < record.bestSolution.setProbabilities.Length; u++)
-            {
-                object[] rowData = new object[1];
-                rowData[0] = (object)record.bestSolution.setProbabilities[u];
-                var row = dataTableSetProbabilities.NewRow();
-                row.ItemArray = rowData;
-                dataTableSetProbabilities.Rows.Add(row);
-            }
-            filePath = rootPath + "setProbabilities.xlsx";
-            if (!File.Exists(filePath))
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, true, filePath, true);
-            }
-            else
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTableSetProbabilities }, true, filePath, false);
-            }
-
             // Write total running time into excel
             DataTable totalRunningTimeTable = new DataTable();
             totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
@@ -195,21 +224,9 @@ namespace GADEApproach
             { 
                 ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
             }
-
-            // Write InputsBin Mapping to Excel
-            filePath = rootPath + "inputsBin.xlsx";
-            DataTable InputsBinTable = bestMove.MapTestInputsToBinsBestMove();
-            if (!File.Exists(filePath))
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { InputsBinTable }, true, filePath, true);
-            }
-            else
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { InputsBinTable }, true, filePath, false);
-            }
         }
             
-        public async static void ExperimentsA(int[] numOfLabelArray, double[][] entropy,string root)
+        public async void ExperimentsA(int[] numOfLabelArray, double[][] entropy,string root)
         {
             rootPath = root + @"\";
             for (int i = 0; i < numOfLabelArray.Length; i++)
@@ -232,7 +249,7 @@ namespace GADEApproach
                     {
                         recordsRuns[run] = new record();
                         recordsRuns[run].fitnessGen = new double[maxGen];
-                        recordsRuns[run].goodnessOfFitGen = new double[maxGen];
+                        recordsRuns[run].probLowBoundGen = new double[maxGen];
                         recordsRuns[run].bestSolution = new solution();
                         recordsRuns[run].bestSolution.setProbabilities = new double[numOfLabelArray[i]];
                     }
@@ -260,7 +277,7 @@ namespace GADEApproach
                                     SyntheticSUT sutTypeC = new SyntheticSUT().SUTB(numOfLabelArray[i], entropy[i][j]);
                                     sutTypeC.InputDomainToExcel(rootPath + @"Label_" + fileName + "_" + "r" + id.ToString() + ".xlsx");
                                     GlobalVar.mutex_K.ReleaseMutex();
-                                    GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC);
+                                    GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC,1);
                                     gals.ExpectedTriggeringProbSetUp();
                                     sutTypeC.BinsInitialization();
                                     gals.GAInitialization();
@@ -306,14 +323,14 @@ namespace GADEApproach
                         dataTable.Columns.Add(k.ToString(), Type.GetType("System.Double"));
                     }
 
-                    for (int u = 0; u < recordsRuns[0].goodnessOfFitGen.Count(); u++)
+                    for (int u = 0; u < recordsRuns[0].probLowBoundGen.Count(); u++)
                     {
                         object[] rowData = new object[runTimes * 2];
 
                         for (int k = 0; k < runTimes; k++)
                         {   // Remember, calculating true or goodnessOfFit can't be used in
                             // Total Running Time calculation
-                            rowData[k * 2 + 0] = (object)recordsRuns[k].goodnessOfFitGen[u];
+                            rowData[k * 2 + 0] = (object)recordsRuns[k].probLowBoundGen[u];
                             rowData[k * 2 + 1] = (object)recordsRuns[k].fitnessGen[u];
                         }
                         var row = dataTable.NewRow();

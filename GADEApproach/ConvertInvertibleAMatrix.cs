@@ -29,6 +29,10 @@ namespace GADEApproach
                     }
                     return -1;
                 }).Where(x => x != -1).ToArray();
+                if (binIndicesOfithLabel.Length == 0)
+                {
+                    continue;
+                }
                 Vector<double> triProb = Vector<double>.Build.Dense(numOfLabels);
                 for (int j = 0; j < binIndicesOfithLabel.Length; j++)
                 {
@@ -104,10 +108,10 @@ namespace GADEApproach
                 InvertibleAMatrix.SetColumn(i,newColumnVects[i]);
             }
             AMatrix = InvertibleAMatrix;
-            var tmpp = newBinsInSets.Distinct().OrderBy(x=>x);
-            int rank = AMatrix.Rank();
-            int tmp = OrthUnitVects.Count;
-            var a = InvertibleAMatrix.TransposeThisAndMultiply(InvertibleAMatrix).Inverse();
+            //int rank = AMatrix.Rank();
+            //var tmpp = newBinsInSets.Distinct().OrderBy(x=>x);
+            //int tmp = OrthUnitVects.Count;
+           // var a = InvertibleAMatrix.TransposeThisAndMultiply(InvertibleAMatrix).Inverse();
         }
     }
 }

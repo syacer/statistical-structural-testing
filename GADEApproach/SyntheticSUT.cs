@@ -355,8 +355,8 @@ namespace GADEApproach
             for (int i = 0; i < totalNumberOfBins; i++)
             {
                 bins[i] = new Pair<int, int, double[]>();
-                bins[i].Item0 = i;
-                bins[i].Item1 = -1;
+                bins[i].BinIndex = i;
+                bins[i].SetIndexPlus1 = -1;
                 TriProbabilitiesInBinSetup(bins[i], i);
             }
         }
@@ -403,7 +403,7 @@ namespace GADEApproach
             triggeringProbilities = triggeringProbilities
                 .Select(x => x / numOfSamplesInBin).ToArray();
 #endif
-            bin.Item2 = triggeringProbilities;
+            bin.ProbInBins = triggeringProbilities;
         }
     }
 }

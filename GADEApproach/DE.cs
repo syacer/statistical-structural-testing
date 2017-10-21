@@ -31,9 +31,9 @@ namespace GADEApproach
 
         public void FitnessCal(Pair<int,double,double[]> s)
         {
-            if (s.Item2.Where(x => x < 0 == true).Count() != 0)
+            if (s.ProbInBins.Where(x => x < 0 == true).Count() != 0)
             {
-                s.Item1 = -1* s.Item2.Where(x => x < 0 == true).Count();
+                s.SetIndexPlus1 = -1* s.ProbInBins.Where(x => x < 0 == true).Count();
                 return;
             }
                 
@@ -42,18 +42,18 @@ namespace GADEApproach
             {
                 for (int j = 0; j < numOfLabel; j++)
                 {
-                    Amatrix[i, j] = bins.Where(x => x.Item1 == j + 1).Sum(x => x.Item2[i]);
-                    Amatrix[i, j] /= bins.Where(x => x.Item1 == j + 1).Count();
+                    Amatrix[i, j] = bins.Where(x => x.SetIndexPlus1 == j + 1).Sum(x => x.ProbInBins[i]);
+                    Amatrix[i, j] /= bins.Where(x => x.SetIndexPlus1 == j + 1).Count();
                 }
             }
             double error = 0;
             for (int row = 0; row < numOfLabel; row++)
             {
                 error += Math.Pow((Amatrix.Row(row).ToRowMatrix().Multiply(Vector<double>
-                    .Build.Dense(s.Item2))[0] - expTriProb[row]),2);
+                    .Build.Dense(s.ProbInBins))[0] - expTriProb[row]),2);
             }
 
-            s.Item1 = 1.0 / error;
+            s.SetIndexPlus1 = 1.0 / error;
         }
         public async void DE_FitnessEvaluation(int[] token)
         {
@@ -102,7 +102,7 @@ namespace GADEApproach
                 Reproduction();
                 if (gen % 20 != 0 && gen != 0)
                 {
-                    historyOfFitness[gen % 20] = pool.Max(y => y.Item1);
+                    historyOfFitness[gen % 20] = pool.Max(y => y.SetIndexPlus1);
                 }
                 else
                 {
@@ -115,7 +115,7 @@ namespace GADEApproach
                     }
                 }
             }
-            return pool.Where(x => x.Item1 == pool.Max(y => y.Item1)).First();
+            return pool.Where(x => x.SetIndexPlus1 == pool.Max(y => y.SetIndexPlus1)).First();
         }
 
         private void DE_Initialization()
@@ -132,18 +132,18 @@ namespace GADEApproach
                     lowEnd = lowEnd - result;
                 }
                 pool[i] = new Pair<int, double, double[]>();
-                pool[i].Item0 = i;
-                pool[i].Item1 = -1.0;
-                pool[i].Item2 = ceSetProbabilities;
+                pool[i].BinIndex = i;
+                pool[i].SetIndexPlus1 = -1.0;
+                pool[i].ProbInBins = ceSetProbabilities;
             }
            
         }
         Pair<int, double, double[]> DifferentialCrossover(int[] selectedList, int sIndex)
         {
             double F = 1.5; //[0,2]
-            var s1 = pool[selectedList[0]].Item2;
-            var s2 = pool[selectedList[1]].Item2;
-            var s3 = pool[selectedList[2]].Item2;
+            var s1 = pool[selectedList[0]].ProbInBins;
+            var s2 = pool[selectedList[1]].ProbInBins;
+            var s3 = pool[selectedList[2]].ProbInBins;
 
             var solutionCopy = Copy.DeepCopy(pool[sIndex]);
             int R = GlobalVar.rnd.Next(1,numOfLabel);
@@ -152,13 +152,13 @@ namespace GADEApproach
                 double r = GlobalVar.rnd.NextDouble();
                 if (r <= 0.9 || i == R)
                 {
-                    solutionCopy.Item2[i] = s1[i] + F * (s2[i] - s3[i]);
+                    solutionCopy.ProbInBins[i] = s1[i] + F * (s2[i] - s3[i]);
                 }
             }
 
-            solutionCopy.Item2[numOfLabel - 1] =
-                1 - (solutionCopy.Item2.Sum()
-                - solutionCopy.Item2[numOfLabel - 1]);
+            solutionCopy.ProbInBins[numOfLabel - 1] =
+                1 - (solutionCopy.ProbInBins.Sum()
+                - solutionCopy.ProbInBins[numOfLabel - 1]);
 
             return solutionCopy;
         }
@@ -172,8 +172,8 @@ namespace GADEApproach
                 int[] selectedList = DifferentialSelection(i);
                 var newSolution = DifferentialCrossover(selectedList,i);
                 FitnessCal(newSolution);
-                tempPool[i] = newSolution.Item1 > pool[i].Item1 ? newSolution : Copy.DeepCopy(pool[i]);
-                tempPool[i].Item0 = i;
+                tempPool[i] = newSolution.SetIndexPlus1 > pool[i].SetIndexPlus1 ? newSolution : Copy.DeepCopy(pool[i]);
+                tempPool[i].BinIndex = i;
             }
 
             Array.Clear(pool, 0, pool.Length);
