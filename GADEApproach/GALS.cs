@@ -90,7 +90,7 @@ namespace GADEApproach
 
             int[] token = new int[1];
             FitnessEvaluationNoParll(token);
-            MOGA_NormalizeFitness();
+           // MOGA_NormalizeFitness();
             while (token[0] == 0) ;
             token[0] = 0;
 
@@ -99,15 +99,15 @@ namespace GADEApproach
             {
                 Reproduction();
                 FitnessEvaluationNoParll(token);
-                MOGA_NormalizeFitness();
+                //MOGA_NormalizeFitness();
                 while (token[0] == 0) ;
                 token[0] = 0;
 
                 // Start Recording
                 watch.Stop();
 
-#if MOGA == true
-                var orderedSolutions = pool.OrderByDescending(x => x.ProbLowBound);
+#if MOGA == false
+                var bestSolution = pool.OrderByDescending(x => x.ProbLowBound).First();
 #else
                 var rankOneSolutions = pool.Where(X => X.Rank == pool.Max(y => y.Rank)).ToArray();
                 double avgProbLowbound = rankOneSolutions.Select(x => x.ProbLowBound).Sum() / rankOneSolutions.Count();
@@ -141,19 +141,23 @@ namespace GADEApproach
 
             watch.Stop();
 
+#if MOGA == false
+            var BestbestSolution = pool.OrderByDescending(x => x.ProbLowBound).First();
+#else
             var BestrankOneSolutions = pool.Where(X => X.Rank == pool.Max(y => y.Rank)).ToArray();
             double BestavgProbLowbound = BestrankOneSolutions.Select(x => x.ProbLowBound).Sum() / BestrankOneSolutions.Count();
             double BestavgVariance = BestrankOneSolutions.Select(x => x.Variance).Sum() / BestrankOneSolutions.Count();
             var BestarrayOfValue = BestrankOneSolutions.Select(x => Math.Pow(x.Variance - BestavgVariance, 2) + Math.Pow(x.ProbLowBound - BestavgProbLowbound, 2)).ToArray();
             int BsetbestSolutionIndex = Array.IndexOf(BestarrayOfValue, BestarrayOfValue.Min());
             var BestbestSolution = BestrankOneSolutions.ElementAt(BsetbestSolutionIndex);
+#endif
 
             record.bestSolution.binSetup = Copy.DeepCopy(BestbestSolution.binsSetup.Select(x => x.SetIndexPlus1).ToArray());
+            record.bestSolution.Amatrix = Copy.DeepCopy(BestbestSolution.AMatrix);
             var totalRuningTime = watch.ElapsedMilliseconds;
             record.bestSolution.totalRunTime = totalRuningTime;
             record.bestSolution.setProbabilities = Copy.DeepCopy(
                 coverPointSetProb[BestbestSolution.Index]);
-            record.bestSolution.Amatrix = Copy.DeepCopy(BestbestSolution.AMatrix);
 
         }
 
@@ -170,9 +174,8 @@ namespace GADEApproach
                 pool[i].binsSetup = Copy.DeepCopy(sut.bins);
                 for (int j = 0; j < pool[i].binsSetup.Length; j++)
                 {
-                    pool[i].binsSetup[j].SetIndexPlus1 = GlobalVar.rnd.Next(1,numOfLabels+1);
+                    pool[i].binsSetup[j].SetIndexPlus1 = GlobalVar.rnd.Next(1,3);
                 }
-                SolutionRepair(pool[i].binsSetup);
             }
         }
         private void SolutionRepair(Pair<int, int, double[]>[] bins)
@@ -248,72 +251,58 @@ namespace GADEApproach
             for (int k = 0; k < populationSize; k++)
             {
                 //Console.Write("task #{0}", id);
-                Matrix<double> Amatrix = null;
+                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels,2);
                 int[] binsInSets = null;
-                int[] newBinsInSets = null;
                 double[][] binsSetup = null;
 
-                if (!(generation != 0 && k == 0))
+                
+                Pair<int, double, Pair<int, int, double[]>[], Matrix<double>, double, double> s =
+                    new Pair<int, double, Pair<int, int, double[]>[], Matrix<double>, double, double>();
+                s.binsSetup = new Pair<int, int, double[]>[1024];
+
+                for (int i = 0; i < 1024; i++)
                 {
-                    WraperForCreateAMatrix(pool[k].binsSetup, out binsInSets, out binsSetup);
-                    ConvertInvertibleAMatrix.CreateInvertibleAMatrix(
-                        ref Amatrix, binsInSets, binsSetup, out newBinsInSets, numOfLabels);
-
-                    // New Add begins
-                    for (int i = 0; i < pool[k].binsSetup.Length; i++)
-                    {
-                        pool[k].binsSetup[i].SetIndexPlus1 = newBinsInSets[i];
-                    }
-
-                    // Check above to see if the maximum is less than ~17/8/9， should not reach 42
-                    pool[k].AMatrix = Amatrix;
+                    s.binsSetup[i] = new Pair<int, int, double[]>();
+                    s.binsSetup[i].BinIndex = i;
+                    s.binsSetup[i].SetIndexPlus1 = sut.bins[i].ProbInBins[37] != 0 || sut.bins[i].ProbInBins[40] != 0 ? 1 : 2;
+                    s.binsSetup[i].ProbInBins = Copy.DeepCopy(sut.bins[i].ProbInBins);
                 }
-                else
-                {
-                    Amatrix = pool[k].AMatrix;
-                    newBinsInSets = pool[k].binsSetup.Select(x => x.SetIndexPlus1).ToArray();
-                }
+                pool[0] = Copy.DeepCopy(s);
+                WraperForCreateAMatrix(pool[k].binsSetup, out binsInSets, out binsSetup);
+                int countSet1 = binsInSets.Count(x => x == 1);
+                int countSet2 = binsInSets.Count(x => x == 2);
+                bool Valid = countSet1 + countSet2 == 1024 ? true : false;
 
-                // End of section
+                Vector<double> triinSet1 = Vector<double>.Build.Dense(numOfLabels);
+                Vector<double> triinSet2 = Vector<double>.Build.Dense(numOfLabels);
 
-                double minInRow = 9999;
-                int colIndexOfMin = -1;
-                for (int i = 0; i < Amatrix.RowCount; i++)
+                for (int i = 0; i < binsInSets.Length; i++)
                 {
-                    double maxInCol = -1;
-                    int colIndexOfMax = -1;
-                    for (int j = 0; j < Amatrix.ColumnCount; j++)
+                    if (pool[k].binsSetup[i].SetIndexPlus1 == 1)
                     {
-                        if (Amatrix[i, j] > maxInCol)
-                        {
-                            maxInCol = Amatrix[i, j];
-                            colIndexOfMax = j;
-                        }
+                        triinSet1 += Vector<double>.Build.Dense(pool[k].binsSetup[i].ProbInBins);
                     }
-                    if (maxInCol < minInRow)
+                    else
                     {
-                        minInRow = maxInCol;
-                        colIndexOfMin = colIndexOfMax;
+                        triinSet2 += Vector<double>.Build.Dense(pool[k].binsSetup[i].ProbInBins);
                     }
                 }
+
+                triinSet1 = triinSet1.Divide(countSet1);
+                triinSet2 = triinSet2.Divide(countSet2);
+                Amatrix.SetColumn(0, triinSet1);
+                Amatrix.SetColumn(1,triinSet2);
 
                 int[] sizeOfSetsAry = new int[Amatrix.ColumnCount];
-                int maxSize = -1;
-                int colIndexOfMaxSize = -1;
-                for (int i = 0; i < Amatrix.ColumnCount; i++)
-                {
-                    sizeOfSetsAry[i] = newBinsInSets.Count(x => x==i+1);
-                    if (sizeOfSetsAry[i] > maxSize)
-                    {
-                        maxSize = sizeOfSetsAry[i];
-                        colIndexOfMaxSize = i;
-                    }
-                }
-
-                double SVar = (Math.Pow(newBinsInSets.Count(x=> x== colIndexOfMin+1),2)-1)/12;
+                int maxSize = countSet1 > countSet2 ? countSet1 : countSet2;
+                int smallSize = countSet1 < countSet2 ? countSet1 : countSet2;
+                int colIndexOfMaxSize = countSet1 > countSet2 ? 0 : 1;
+                int colIndexOfMinSize = 1 - colIndexOfMaxSize;
+                
+                double SVar = (Math.Pow(smallSize,2)-1)/12;
                 double XVar = (Math.Pow(maxSize,2)-1)/12;
-                double SMinTri = Amatrix.Column(colIndexOfMaxSize).Min();
-                double XMinTri = minInRow;
+                double SMinTri = Amatrix.Column(1).Min();
+                double XMinTri = Amatrix.Column(0).Min();
 
                 double w1 = 0;
                 if (Math.Round(XMinTri - SMinTri, 4) != 0)
@@ -359,16 +348,9 @@ namespace GADEApproach
 
                 pool[k].ProbLowBound = p;
                 pool[k].Variance = v/ maxVar;
-                if (colIndexOfMin == colIndexOfMaxSize)
-                {
-                    //for (int i = 0; i < Amatrix.ColumnCount; i++)
-                    //{
-                    //    Console.WriteLine(pool[k].Item2.Where(x => x.Item1 == i + 1).Count());
-                    //}
-                    w2 = w1;
-                }
+                pool[k].AMatrix = Amatrix;
                 coverPointSetProb[k] = new double[Amatrix.ColumnCount];
-                coverPointSetProb[k][colIndexOfMin] = w1;
+                coverPointSetProb[k][0] = w1;
                 coverPointSetProb[k][colIndexOfMaxSize] = w2;
             }
             token[0] = 1;
@@ -454,7 +436,7 @@ namespace GADEApproach
             {
                 if (GlobalVar.rnd.NextDouble() <= mtPropotion)
                 {
-                    int newLabel = GlobalVar.rnd.Next(1, numOfLabels + 1);
+                    int newLabel = GlobalVar.rnd.Next(1, 3);
                     s[i].SetIndexPlus1 = newLabel;
                 }
             }
@@ -468,9 +450,10 @@ namespace GADEApproach
                 new Pair<int, double, Pair<int, int, double[]>[],Matrix<double>,double,double>[populationSize];
 
             int startIndex = 0;
-#if MOGA == true
-            var rankOneSolutions = pool.Where(X => X.Rank == pool.Max(y=>y.Rank)).ToArray()[0];
+#if MOGA == false
+            var rankOneSolutions = pool.Where(x=>x.ProbLowBound == pool.Max(y=>y.ProbLowBound)).ToArray()[0];
             tempPool[0] = Copy.DeepCopy(rankOneSolutions);
+            tempPool[0].Index = 0;
             startIndex = 1;
 #else
             var rankOneSolutions = pool.Where(X => X.Rank == pool.Max(y => y.Rank)).ToArray();
@@ -527,10 +510,10 @@ namespace GADEApproach
 
             // Normalize Fitness
             int tmpCnt = 0;
-            double sum = pool.Sum(x=>x.Rank);
+            double sum = pool.Sum(x=>x.ProbLowBound);
             for (int i = 0; i < max - min + 1; i++)
             {
-                fitnessPropotions[i] = pool[i].Rank / sum;
+                fitnessPropotions[i] = pool[i].ProbLowBound / sum;
             }
             double[] cumulativeArray = new double[populationSize];
             double cumulation = 0.0;
