@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 //using Accord.Math;
 
+//This branch is wrong: the low bound cannot be derived using the algorithm in fitnesscal
 namespace GADEApproach
 {
     [Serializable]
@@ -154,6 +155,26 @@ namespace GADEApproach
             record.bestSolution.setProbabilities = Copy.DeepCopy(
                 coverPointSetProb[BestbestSolution.Index]);
             record.bestSolution.Amatrix = Copy.DeepCopy(BestbestSolution.AMatrix);
+            double a = BestbestSolution.binsSetup.Sum(x =>
+            {
+                    return x.ProbInBins[40];
+            });
+            
+            string t = record.bestSolution.Amatrix.ToString();
+            double[] ttt = new double[42];
+            int count = testBestSolution.binsSetup.Count(x=>x.SetIndexPlus1 == 13);
+            for (int m = 0; m < 42; m++)
+            {
+                var tt = BestbestSolution.binsSetup.Sum(x =>
+                {
+                    if (x.SetIndexPlus1 == 13)
+                    {
+                        return x.ProbInBins[m]*1.0/count;
+                    }
+                    return 0;
+                });
+                ttt[m] = tt;
+            };
 
         }
 
@@ -274,6 +295,10 @@ namespace GADEApproach
                     newBinsInSets = pool[k].binsSetup.Select(x => x.SetIndexPlus1).ToArray();
                 }
 
+                if (Amatrix.Exists(x => x > 1))
+                {
+                    Console.ReadKey();
+                }
                 // End of section
 
                 double minInRow = 9999;
@@ -358,7 +383,7 @@ namespace GADEApproach
                 //}
 
                 pool[k].ProbLowBound = p;
-                pool[k].Variance = v/ maxVar;
+                pool[k].Variance = 0;// v/ maxVar;
                 if (colIndexOfMin == colIndexOfMaxSize)
                 {
                     //for (int i = 0; i < Amatrix.ColumnCount; i++)

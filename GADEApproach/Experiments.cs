@@ -73,6 +73,7 @@ namespace GADEApproach
         public void BestMoveExperimentsB(string rootpath, int numOfTestCases, int imFactor)
         {
             rootPath = rootpath;
+            string filePath;
             string testInputsFilePath = rootpath + @"testData";
             maxGen = 5000;
 
@@ -80,6 +81,30 @@ namespace GADEApproach
             RealSUT bestMove = new RealSUT();
             bestMove.sutBestMove(); // Setup triggering probabilities in bins
                                     //Write bins triggering prob into excel
+                                    //Write bins triggering prob into excel
+
+            DataTable dataTablebinsTriProb = new DataTable();
+            for (int u = 0; u < bestMove.numOfLabels; u++)
+            {
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < bestMove.bins.Length; u++)
+            {
+                object[] rowData = null;
+                rowData = bestMove.bins[u].ProbInBins.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+            filePath = rootPath + "triInBins.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
+            }
 
             GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove,imFactor);
 
@@ -153,7 +178,7 @@ namespace GADEApproach
                 row.ItemArray = rowData;
                 dataTable.Rows.Add(row);
             }
-            string filePath = rootPath + "fitnesses.xlsx";
+            filePath = rootPath + "fitnesses.xlsx";
             if (!File.Exists(filePath))
             {
                 ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
@@ -161,30 +186,6 @@ namespace GADEApproach
             else
             {
                 ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
-            }
-
-            //Write bins triggering prob into excel
-            DataTable dataTablebinsTriProb = new DataTable();
-            for (int u = 0; u < bestMove.numOfLabels; u++)
-            {
-                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
-            }
-            for (int u = 0; u < bestMove.bins.Length; u++)
-            {
-                object[] rowData = null;
-                rowData = bestMove.bins[u].ProbInBins.Select(x => (object)x).ToArray();
-                var row = dataTablebinsTriProb.NewRow();
-                row.ItemArray = rowData;
-                dataTablebinsTriProb.Rows.Add(row);
-            }
-            filePath = rootPath + "triInBins.xlsx";
-            if (!File.Exists(filePath))
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
-            }
-            else
-            {
-                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
             }
 
             //Write bins setup into excel
