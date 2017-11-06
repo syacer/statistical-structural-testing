@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GADEApproach.TrainditionalApproaches;
+using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -137,7 +139,7 @@ namespace GADEApproach
         private void button9_Click(object sender, EventArgs e)
         {
             Task.Run(() => { new TestDataGeneration(
-                rootPath,
+                rootPath+"testdata",
                 null,
                 Convert.ToInt32(textBox2.Text),
                 null
@@ -158,10 +160,49 @@ namespace GADEApproach
                         Directory.Delete(rootPath,true);
                     }
                     Directory.CreateDirectory(rootPath);
-                    new Experiments().BestMoveExperimentsB(rootPath, Convert.ToInt32(textBox2.Text), Convert.ToInt32(textBox5.Text));
+                    new Experiments().BestMoveExperimentsB(rootPath, Convert.ToInt32(textBox2.Text));
                 }
                 Console.WriteLine("Finish");
             });
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            string selectedAlgorithm = checkedListBox2.SelectedItem.ToString();
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments2().BestMoveExperimentsB2(rootPath, Convert.ToInt32(textBox2.Text), selectedAlgorithm);
+                }
+                Console.WriteLine("Finish");
+            });
+
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Matrix<double> m = Matrix<double>.Build.Dense(5, 2);
+            double[] weights = null;
+            m[0, 0] = 0.7;
+            m[0, 1] = 0;
+            m[1, 0] = 0;
+            m[1, 1] = 0.7;
+            m[2, 0] = 0.3;
+            m[2, 1] = 0.4;
+            m[3, 0] = 0.8;
+            m[3, 1] = 0.1;
+            m[4, 0] = 0.2;
+            m[4, 1] = 0.7;
+            GoalProgramming.MinTrigProbCal(m, out weights);
         }
     }
 }

@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace GADEApproach
 {
-    class TestDataGeneration
+    public class TestDataGeneration
     {
-        string _testdataFilePath = null;
+        public string _testdataFilePath = null;
         DataTable _inputSetMapDt = null;
-        int _testSize = 0;
+        public int _testSize = 0;
         double[] _SetProbAry = null;
 
         public TestDataGeneration(
@@ -37,9 +37,9 @@ namespace GADEApproach
             }
         }
         // TestDataGenerationA is intended for input domian space < 262144
-        public void testDataGenerationBestMove()
+        public void testDataGenerationBestMove(string rootPath)
         {
-            string stra = SolverCLP.rootpath.Remove(SolverCLP.rootpath.Length - 1, 1);
+            string stra = rootPath.Remove(rootPath.Length - 1, 1);
             string functionName = stra.Substring(stra.LastIndexOf(@"\") + 1);
 
             List<object[]> inputSetMap = new List<object[]>();

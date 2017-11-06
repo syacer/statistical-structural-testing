@@ -47,8 +47,9 @@
             this.button10 = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.textBox4 = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
+            this.checkedListBox2 = new System.Windows.Forms.CheckedListBox();
+            this.button6 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -184,7 +185,7 @@
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft YaHei", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(128)))), ((int)(((byte)(0)))));
-            this.label3.Location = new System.Drawing.Point(15, 144);
+            this.label3.Location = new System.Drawing.Point(15, 102);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(91, 19);
             this.label3.TabIndex = 24;
@@ -226,30 +227,47 @@
             this.textBox4.Size = new System.Drawing.Size(336, 21);
             this.textBox4.TabIndex = 28;
             // 
-            // label1
+            // button5
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 273);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(59, 12);
-            this.label1.TabIndex = 29;
-            this.label1.Text = "IM Factor";
+            this.button5.Location = new System.Drawing.Point(19, 137);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(75, 23);
+            this.button5.TabIndex = 31;
+            this.button5.Text = "TraditionalGA";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
-            // textBox5
+            // checkedListBox2
             // 
-            this.textBox5.Location = new System.Drawing.Point(12, 288);
-            this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(93, 21);
-            this.textBox5.TabIndex = 30;
-            this.textBox5.Text = "1";
+            this.checkedListBox2.FormattingEnabled = true;
+            this.checkedListBox2.Items.AddRange(new object[] {
+            "HC",
+            "GA",
+            "DE",
+            "SA"});
+            this.checkedListBox2.Location = new System.Drawing.Point(12, 272);
+            this.checkedListBox2.Name = "checkedListBox2";
+            this.checkedListBox2.Size = new System.Drawing.Size(120, 84);
+            this.checkedListBox2.TabIndex = 32;
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(577, 272);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(122, 23);
+            this.button6.TabIndex = 33;
+            this.button6.Text = "Goal Programming";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1276, 752);
-            this.Controls.Add(this.textBox5);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.button6);
+            this.Controls.Add(this.checkedListBox2);
+            this.Controls.Add(this.button5);
             this.Controls.Add(this.textBox4);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.button10);
@@ -293,8 +311,9 @@
         private System.Windows.Forms.Button button10;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBox5;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.CheckedListBox checkedListBox2;
+        private System.Windows.Forms.Button button6;
     }
 }
 

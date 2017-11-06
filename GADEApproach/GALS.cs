@@ -43,6 +43,7 @@ namespace GADEApproach
         public double[] setProbabilities;
         public long totalRunTime;
         public Matrix<double> Amatrix;
+        public Matrix<double> WeightMateix; // For triditional methods
     }
 
     [Serializable]
@@ -59,7 +60,6 @@ namespace GADEApproach
         double crRate = 0.9;
         double mtRate = 0.2;
         double mtPropotion = 0.2;
-        double IMfactor = 1;
         //index, fitness, Bins<Index,SetIndex,tri Probs. in each bin>, AMatrix, prob. low bound
         Pair<int, double,Pair<int, int, double[]>[], Matrix<double>,double,double>[] pool; //index, fitness, bins
         double[][] coverPointSetProb;
@@ -68,12 +68,11 @@ namespace GADEApproach
         SUT sut = null;
         double minGoodnessOfFit = 9999999;
 
-        public GALS(int numOfMaxGen, int numLabels, SUT SUT, int imFactor)
+        public GALS(int numOfMaxGen, int numLabels, SUT SUT)
         {
             maxGen = numOfMaxGen;
             numOfLabels = numLabels;
             sut = SUT;
-            IMfactor = imFactor;
         }
 
         public void WraperForCreateAMatrix(
@@ -94,7 +93,7 @@ namespace GADEApproach
             while (token[0] == 0) ;
             token[0] = 0;
 
-            Queue<double> last20fitness = new Queue<double>();
+            Queue<double> lastNumOffitness = new Queue<double>();
             while (generation < maxGen)
             {
                 Reproduction();
@@ -122,18 +121,18 @@ namespace GADEApproach
                 record.probLowBoundGen[generation] = bestSolution.Variance;
                 watch.Start();
 
-                if (last20fitness.Count == 100)
+                if (lastNumOffitness.Count == 100)
                 {
-                    last20fitness.Dequeue();
-                    last20fitness.Enqueue(1.0 / bestSolution.ProbLowBound);
-                    if (last20fitness.All(x => Math.Round(x,3) == Math.Round(last20fitness.First(),3)))
+                    lastNumOffitness.Dequeue();
+                    lastNumOffitness.Enqueue(bestSolution.ProbLowBound);
+                    if (lastNumOffitness.All(x => Math.Round(x,3) == Math.Round(lastNumOffitness.First(),3)))
                     {
                         break;
                     }
                 }
                 else
                 {
-                    last20fitness.Enqueue(1.0 / bestSolution.ProbLowBound);
+                    lastNumOffitness.Enqueue(1.0 / bestSolution.ProbLowBound);
                 }
 
                 generation += 1;
@@ -174,7 +173,7 @@ namespace GADEApproach
                 pool[i].binsSetup = Copy.DeepCopy(sut.bins);
                 for (int j = 0; j < pool[i].binsSetup.Length; j++)
                 {
-                    pool[i].binsSetup[j].SetIndexPlus1 = GlobalVar.rnd.Next(1,3);
+                    pool[i].binsSetup[j].SetIndexPlus1 = GlobalVar.rnd.Next(1,numOfLabels+1);
                 }
             }
         }
@@ -251,107 +250,32 @@ namespace GADEApproach
             for (int k = 0; k < populationSize; k++)
             {
                 //Console.Write("task #{0}", id);
-                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels,2);
+                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels,numOfLabels);
                 int[] binsInSets = null;
                 double[][] binsSetup = null;
+                int[] newBinsInSet = null;
+                double[] weightArray = new double[numOfLabels];
 
-                
-                Pair<int, double, Pair<int, int, double[]>[], Matrix<double>, double, double> s =
-                    new Pair<int, double, Pair<int, int, double[]>[], Matrix<double>, double, double>();
-                s.binsSetup = new Pair<int, int, double[]>[1024];
-
-                for (int i = 0; i < 1024; i++)
-                {
-                    s.binsSetup[i] = new Pair<int, int, double[]>();
-                    s.binsSetup[i].BinIndex = i;
-                    s.binsSetup[i].SetIndexPlus1 = sut.bins[i].ProbInBins[37] != 0 || sut.bins[i].ProbInBins[40] != 0 ? 1 : 2;
-                    s.binsSetup[i].ProbInBins = Copy.DeepCopy(sut.bins[i].ProbInBins);
-                }
-                pool[0] = Copy.DeepCopy(s);
                 WraperForCreateAMatrix(pool[k].binsSetup, out binsInSets, out binsSetup);
-                int countSet1 = binsInSets.Count(x => x == 1);
-                int countSet2 = binsInSets.Count(x => x == 2);
-                bool Valid = countSet1 + countSet2 == 1024 ? true : false;
+                ConvertInvertibleAMatrix.CreateInvertibleAMatrix(ref Amatrix,binsInSets,binsSetup,out newBinsInSet,numOfLabels);
 
-                Vector<double> triinSet1 = Vector<double>.Build.Dense(numOfLabels);
-                Vector<double> triinSet2 = Vector<double>.Build.Dense(numOfLabels);
-
-                for (int i = 0; i < binsInSets.Length; i++)
-                {
-                    if (pool[k].binsSetup[i].SetIndexPlus1 == 1)
-                    {
-                        triinSet1 += Vector<double>.Build.Dense(pool[k].binsSetup[i].ProbInBins);
-                    }
-                    else
-                    {
-                        triinSet2 += Vector<double>.Build.Dense(pool[k].binsSetup[i].ProbInBins);
-                    }
-                }
-
-                triinSet1 = triinSet1.Divide(countSet1);
-                triinSet2 = triinSet2.Divide(countSet2);
-                Amatrix.SetColumn(0, triinSet1);
-                Amatrix.SetColumn(1,triinSet2);
-
-                int[] sizeOfSetsAry = new int[Amatrix.ColumnCount];
-                int maxSize = countSet1 > countSet2 ? countSet1 : countSet2;
-                int smallSize = countSet1 < countSet2 ? countSet1 : countSet2;
-                int colIndexOfMaxSize = countSet1 > countSet2 ? 0 : 1;
-                int colIndexOfMinSize = 1 - colIndexOfMaxSize;
-                
-                double SVar = (Math.Pow(smallSize,2)-1)/12;
-                double XVar = (Math.Pow(maxSize,2)-1)/12;
-                double SMinTri = Amatrix.Column(1).Min();
-                double XMinTri = Amatrix.Column(0).Min();
-
-                double w1 = 0;
-                if (Math.Round(XMinTri - SMinTri, 4) != 0)
-                {
-                    w1 = (XMinTri * IMfactor - SMinTri) / (XMinTri - SMinTri);
-                }
-                double w1t = 0;
-                if (Math.Round(XVar + SVar, 4) != 0)
-                {
-                    w1t = 2 * XVar / (XVar + SVar) - 1;
-                }
-
-                if (w1 >= w1t)
-                {
-                    w1 = 1;
-                }
-
-                double w2 = 1 - w1;
-
-                // fitness = P/PMax + var/varMax
-                // PMax = 1, VarMax = numofBins * numOfBins
-
-                double maxVar = (Math.Pow(pool[k].binsSetup.Length,2)+1)/12;
-                double p = XMinTri * w1 + SMinTri * w2;
-                double v = SVar * Math.Pow(w1, 2) + XVar * Math.Pow(w2, 2);
-
-                //if (pool[k].ProbLowBound != -1 && 0 == k)
-                //{
-                //    if (pool[k].ProbLowBound != p || pool[k].Variance != v / maxVar)
-                //    {
-                //        Console.ReadKey();
-                //        var a =testBestSolution;
-                //    }
-                //    for (int i = 0; i < 1024; i++)
-                //    {
-                //        if (testBestSolution.binsSetup[i].SetIndexPlus1 !=
-                //            pool[k].binsSetup[i].SetIndexPlus1)
-                //        {
-                //            Console.Write("sSS");
-                //        }
-                //    }
-                //}
-
-                pool[k].ProbLowBound = p;
-                pool[k].Variance = v/ maxVar;
+                //Matrix<double> tempAmatrix = Matrix<double>.Build.Dense(3,3);
+                //tempAmatrix[0, 0] = 0.8;
+                //tempAmatrix[0, 1] = 0.5;
+                //tempAmatrix[0, 2] = 0.6;
+                //tempAmatrix[1, 0] = 0.2;
+                //tempAmatrix[1, 1] = 0.4;
+                //tempAmatrix[1, 2] = 0.3;
+                //tempAmatrix[2, 0] = 0.7;
+                //tempAmatrix[2, 1] = 0.1;
+                //tempAmatrix[2, 2] = 0.8;
+                double probLowBound = GoalProgramming.MinTrigProbCal(Amatrix, out weightArray);
+         
+                pool[k].ProbLowBound = probLowBound;
+                pool[k].Variance = 0;
                 pool[k].AMatrix = Amatrix;
                 coverPointSetProb[k] = new double[Amatrix.ColumnCount];
-                coverPointSetProb[k][0] = w1;
-                coverPointSetProb[k][colIndexOfMaxSize] = w2;
+                coverPointSetProb[k] = Copy.DeepCopy(weightArray);
             }
             token[0] = 1;
             //Console.WriteLine("Fitness Evaluation Done");
@@ -436,7 +360,7 @@ namespace GADEApproach
             {
                 if (GlobalVar.rnd.NextDouble() <= mtPropotion)
                 {
-                    int newLabel = GlobalVar.rnd.Next(1, 3);
+                    int newLabel = GlobalVar.rnd.Next(1, numOfLabels+1);
                     s[i].SetIndexPlus1 = newLabel;
                 }
             }

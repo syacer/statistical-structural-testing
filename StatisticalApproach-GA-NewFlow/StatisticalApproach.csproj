@@ -84,9 +84,9 @@
       <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ReadSUTBranchCEData, Version=1.0.6319.36715, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="ReadSUTBranchCEData, Version=1.0.6491.28569, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Debug\ReadSUTBranchCEData.dll</HintPath>
+      <HintPath>..\x64\Debug\ReadSUTBranchCEData.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

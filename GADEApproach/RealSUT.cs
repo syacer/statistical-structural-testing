@@ -42,10 +42,12 @@ namespace GADEApproach
         }
         public void sutBestMove()
         {
-            numOfMinIntervalX = 32;
-            numOfMinIntervalY = 32;
+            sutIndex = 3;
+            numOfMinIntervalX = 128;
+            numOfMinIntervalY = 128;
             int minIntervalX = 512 / numOfMinIntervalX;
             int minIntervalY = 512 / numOfMinIntervalY;
+            numOfMinIntervalInAllDim = numOfMinIntervalX;
             lowbounds = new double[] { 0.0, 0.0 };
             highbounds = new double[] { 511, 511 };
             numOfLabels = 42;

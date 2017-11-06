@@ -1,4 +1,6 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using GADEApproach.TrainditionalApproaches;
+using GADEApproach.TrainditionalApproaches.GA;
+using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -28,6 +30,27 @@ namespace GADEApproach
                 {
                     tmp.AMatrix = Matrix<double>.Build.Dense(input.AMatrix.RowCount,input.AMatrix.ColumnCount);
                     input.AMatrix.CopyTo(tmp.AMatrix);
+                }
+                return (T)(object)tmp;
+            }
+            else if (typeof(T).Name == typeof(Pair<int, double, double, Matrix<double>, double>).Name)
+            {
+                Pair<int, double, double, Matrix<double>, double> tmp =
+                    new Pair<int, double, double, Matrix<double>, double>();
+                Pair<int, double, double, Matrix<double>, double> input =
+                    (Pair<int, double, double, Matrix<double>, double>)Convert.ChangeType(obj, typeof(T));
+
+                tmp.index = input.index;
+                tmp.fitness1 = input.fitness1;
+                tmp.rank = input.rank;
+                if (input.weightsMatrix == null)
+                {
+                    tmp.weightsMatrix = null;
+                }
+                else
+                {
+                    tmp.weightsMatrix = Matrix<double>.Build.Dense(input.weightsMatrix.RowCount, input.weightsMatrix.ColumnCount);
+                    input.weightsMatrix.CopyTo(tmp.weightsMatrix);
                 }
                 return (T)(object)tmp;
             }

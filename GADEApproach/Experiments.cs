@@ -70,12 +70,12 @@ namespace GADEApproach
             var distinctOutputs = outputs.Distinct();
 
         }
-        public void BestMoveExperimentsB(string rootpath, int numOfTestCases, int imFactor)
+        public void BestMoveExperimentsB(string rootpath, int numOfTestCases)
         {
             rootPath = rootpath;
             string filePath = null;
             string testInputsFilePath = rootpath + @"testData";
-            maxGen = 5000;
+            maxGen = 3000;
 
             // Real SUT
             RealSUT bestMove = new RealSUT();
@@ -106,7 +106,7 @@ namespace GADEApproach
             }
 
 
-            GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove,imFactor);
+            GALS gals = new GALS(maxGen, bestMove.numOfLabels,bestMove);
 
             record record = new record();
             record.fitnessGen = new double[maxGen];
@@ -136,7 +136,7 @@ namespace GADEApproach
                 numOfTestCases,
                 record.bestSolution.setProbabilities
                 );
-            tdg.testDataGenerationBestMove();
+            tdg.testDataGenerationBestMove(rootpath);
 
             for (int i = 0; i < ds.Tables.Count; i++)
             {
@@ -278,7 +278,7 @@ namespace GADEApproach
                                     SyntheticSUT sutTypeC = new SyntheticSUT().SUTB(numOfLabelArray[i], entropy[i][j]);
                                     sutTypeC.InputDomainToExcel(rootPath + @"Label_" + fileName + "_" + "r" + id.ToString() + ".xlsx");
                                     GlobalVar.mutex_K.ReleaseMutex();
-                                    GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC,1);
+                                    GALS gals = new GALS(maxGen, numOfLabelArray[i], sutTypeC);
                                     gals.ExpectedTriggeringProbSetUp();
                                     sutTypeC.BinsInitialization();
                                     gals.GAInitialization();
