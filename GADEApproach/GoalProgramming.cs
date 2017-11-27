@@ -99,7 +99,8 @@ namespace GADEApproach
             Array.Copy(sAndW, Amatrix.RowCount, wArray, 0, Amatrix.ColumnCount);
             var trigProbs = Amatrix.Multiply(Vector<double>.Build.Dense(wArray)).ToArray();
             double fitness = trigProbs.Min();
-            var tt = Amatrix.Column(1);
+
+            
             return fitness;
 
         }

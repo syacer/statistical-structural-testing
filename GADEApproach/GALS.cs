@@ -118,10 +118,26 @@ namespace GADEApproach
                 int bestSolutionIndex = Array.IndexOf(arrayOfValue,arrayOfValue.Min());
                 var bestSolution = rankOneSolutions.ElementAt(bestSolutionIndex);
 #endif
-                Console.WriteLine("Run: {0}, lowBound: {1}, Var: {2}", generation, bestSolution.ProbLowBound, bestSolution.Variance);
-
+                var indices = coverPointSetProb[bestSolution.Index].Select((x, i) =>
+                {
+                    if (x >= 0.0001)
+                    {
+                        return i;
+                    }
+                    return -1;
+                }).Where(x => x != -1).ToArray();
+                double totalVariance = 0;
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    int counts = bestSolution.binsSetup.Count(x => x.SetIndexPlus1 == indices[i]+1);
+                    double setiProb = coverPointSetProb[bestSolution.Index][indices[i]];
+                    totalVariance += (1.0 / 12) * (counts * counts - 1) * setiProb * setiProb;
+                }
+                bestSolution.Variance = totalVariance;
                 record.fitnessGen[generation] = bestSolution.ProbLowBound;
                 record.probLowBoundGen[generation] = bestSolution.Variance;
+                Console.WriteLine("Run: {0}, lowBound: {1}, Var: {2}", generation, bestSolution.ProbLowBound, bestSolution.Variance);
+
                 watch.Start();
 
                 if (lastNumOffitness.Count >=  30)
@@ -160,7 +176,6 @@ namespace GADEApproach
             record.bestSolution.totalRunTime = totalRuningTime;
             record.bestSolution.setProbabilities = Copy.DeepCopy(
                 coverPointSetProb[BestbestSolution.Index]);
-
         }
 
         public void GAInitialization()
@@ -264,6 +279,7 @@ namespace GADEApproach
                 double[] weightArray = new double[numOfLabels];
                 WraperForCreateAMatrix(pool[k].binsSetup, out binsInSets, out binsSetup);
                 ConvertInvertibleAMatrix.CreateInvertibleAMatrix(ref Amatrix, binsInSets, binsSetup, out newBinsInSet, numOfLabels);
+                //ConvertInvertibleAMatrix.CreateAMatrix(ref Amatrix, binsInSets, binsSetup, out newBinsInSet, numOfLabels);
                 for (int i = 0; i < pool[k].binsSetup.Length; i++)
                 {
                     pool[k].binsSetup[i].SetIndexPlus1 = newBinsInSet[i];
@@ -288,7 +304,8 @@ namespace GADEApproach
                 }
                 //Console.WriteLine(Amatrix.ToMatrixString());
                 double probLowBound = GoalProgramming.MinTrigProbCal(Amatrix, out weightArray,expTriProb);
-                var t = Amatrix.Column(2);
+
+                //Console.WriteLine("counts: {0}",counts);
                 pool[k].ProbLowBound = probLowBound;
                 pool[k].Variance = 0;
                 pool[k].AMatrix = Amatrix;

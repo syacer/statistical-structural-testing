@@ -349,7 +349,7 @@ namespace GADEApproach
             lowbounds = new double[] { 0.0, 0.0 };
             highbounds = new double[] { 511, 511 };
             numOfLabels = 42;
-            double sampleProbability = 0.3;
+            double sampleProbability = 1.0;
             int totalNumberOfBins = numOfMinIntervalX * numOfMinIntervalY;
             bins = new Pair<int, int, double[]>[totalNumberOfBins];
             for (int i = 0; i < totalNumberOfBins; i++)
@@ -563,7 +563,7 @@ namespace GADEApproach
             // 3 inputs for all :[0,9]
             // inputs = inputs - 3
             sutIndex = 0;
-            totalNumberOfBins = 10  ;// (int)Math.Pow(10, 3);
+            totalNumberOfBins = (int)Math.Pow(10, 3);
             numOfMinIntervalInAllDim = (int)(Math.Pow(10, 3) / totalNumberOfBins);
             bins = new Pair<int, int, double[]>[totalNumberOfBins];
             double sampleProbability = 1.0;

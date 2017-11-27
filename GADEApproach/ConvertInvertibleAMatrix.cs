@@ -9,6 +9,38 @@ namespace GADEApproach
 {
     static class ConvertInvertibleAMatrix
     {
+        static public void CreateAMatrix(
+            ref Matrix<double> AMatrix,
+            int[] binsInSets,
+            double[][] binsSetup,
+            out int[] newBinsInSets,
+            int numOfLabels
+            )
+        {
+            for (int i = 0; i < numOfLabels; i++)
+            {
+                var indices =binsInSets.Select((x, j) =>
+                {
+                    if (x == i)
+                    {
+                        return j;
+                    }
+                    return -1;
+                }).Where(x => x != -1).ToArray();
+
+                Vector<double> columnTri = Vector<double>.Build.Dense(numOfLabels);
+                for (int j = 0; j < indices.Length; j++)
+                {
+                   columnTri = columnTri.Add(Vector<double>.Build.Dense(binsSetup[indices[j]]));
+                }
+                if (indices.Length != 0)
+                {
+                    columnTri = columnTri.Divide(indices.Length);
+                }
+                AMatrix.SetColumn(i,columnTri);
+            }
+            newBinsInSets = Copy.DeepCopy(binsInSets);
+        }
         static public void CreateInvertibleAMatrix(
             ref Matrix<double> AMatrix,
             int[] binsInSets,
