@@ -22,7 +22,9 @@ namespace GADEApproach
         bool inputSimulatorOn = false;
         bool keyState = false;
         LocalFileAccess lfa;
+#pragma warning disable CS0414 // The field 'Form1.inputsBinDt' is assigned but its value is never used
         DataTable inputsBinDt = null;
+#pragma warning restore CS0414 // The field 'Form1.inputsBinDt' is assigned but its value is never used
 
         public Form1()
         {
@@ -123,7 +125,22 @@ namespace GADEApproach
 
         private void button7_Click(object sender, EventArgs e)
         {
-            Task.Run(() => new Experiments().nsichneuExperimentsB());
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().nsichneuExperimentsB(rootPath, Convert.ToInt32(textBox2.Text));
+                }
+                Console.WriteLine("Finish");
+            });
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
@@ -142,6 +159,7 @@ namespace GADEApproach
                 rootPath+"testdata",
                 null,
                 Convert.ToInt32(textBox2.Text),
+                null,
                 null
             ).BestMoveRandomTestSet(); });
         }
@@ -190,19 +208,130 @@ namespace GADEApproach
 
         private void button6_Click(object sender, EventArgs e)
         {
-            Matrix<double> m = Matrix<double>.Build.Dense(5, 2);
+            //Matrix<double> m = Matrix<double>.Build.Dense(3, 2);
+            //double[] weights = null;
+            ////m[0, 0] = 0.6;
+            ////m[0, 1] = 0.2;
+            ////m[1, 0] = 0;
+            ////m[1, 1] = 0.27;
+            ////m[2, 0] = 0.3;
+            ////m[2, 1] = 0.01;
+            //m[0, 0] = 0.6;
+            //m[0, 1] = 0.3525;
+            //m[1, 0] = 0.45;
+            //m[1, 1] = 0.24;
+            //m[2, 0] = 0.45;
+            //m[2, 1] = 0.4025;
+            //GoalProgramming.MinTrigProbCal(m, out weights,new double[] {0.333,0.333,0.333 });
+            //Matrix<double> m = Matrix<double>.Build.Dense(3, 2);
+            //double[] weights = null;
+            //m[0, 0] = 0.2;
+            //m[0, 1] = 0.25;
+            //m[1, 0] = 0.05;
+            //m[1, 1] = 0.06;
+            //m[2, 0] = 0.7;
+            //m[2, 1] = 0.2;
+            //GoalProgramming.MinTrigProbCal(m, out weights, new double[] { 0.1,0.1,0.1});
+
+            Matrix<double> m = Matrix<double>.Build.Dense(30, 30);
+            double[] exp = new double[30];
             double[] weights = null;
-            m[0, 0] = 0.7;
-            m[0, 1] = 0;
-            m[1, 0] = 0;
-            m[1, 1] = 0.7;
-            m[2, 0] = 0.3;
-            m[2, 1] = 0.4;
-            m[3, 0] = 0.8;
-            m[3, 1] = 0.1;
-            m[4, 0] = 0.2;
-            m[4, 1] = 0.7;
-            GoalProgramming.MinTrigProbCal(m, out weights);
+            for (int i = 0; i < 30; i++)
+            {
+                m[i, i] = 0.2;
+                exp[i] = 0.1;
+            }
+
+            GoalProgramming.MinTrigProbCal(m, out weights, exp);
+        }
+
+        private void button11_Click(object sender, EventArgs e)
+        {
+            ProcessMutationScore.ConvertMutationScoreToExcel(
+                @"D:\ContinueSUTTEST\nichneuXX\scores\",
+                @"stScores",
+                43
+            );
+        }
+
+        private void button12_Click(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().binarySearchExperimentsB(rootPath, Convert.ToInt32(textBox2.Text));
+                }
+                Console.WriteLine("Finish");
+            });
+        }
+
+        private void button13_Click(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().quickSortExperimentB(rootPath, Convert.ToInt32(textBox2.Text));
+                }
+                Console.WriteLine("Finish");
+            });
+        }
+
+        private void button14_Click(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().MatrixInverseExperimentB(rootPath, Convert.ToInt32(textBox2.Text));
+                }
+                Console.WriteLine("Finish");
+            });
+        }
+
+        private void button15_Click(object sender, EventArgs e)
+        {
+            Task.Run(() =>
+            {
+                int totalRuningTimes = Convert.ToInt32(textBox3.Text);
+                for (int i = 0; i < totalRuningTimes; i++)
+                {
+                    rootPath = textBox4.Text;
+                    rootPath = rootPath + i.ToString() + @"\";
+                    if (Directory.Exists(rootPath))
+                    {
+                        Directory.Delete(rootPath, true);
+                    }
+                    Directory.CreateDirectory(rootPath);
+                    new Experiments().TriangleExperimentB(rootPath, Convert.ToInt32(textBox2.Text));
+                }
+                Console.WriteLine("Finish");
+            });
         }
     }
 }

@@ -15,60 +15,344 @@ namespace GADEApproach
     {
          public int maxGen = 200;
          public int runTimes = 20;
-         public string rootPath = @"C:\Users\shiya\Desktop\recordTEST\";
+         public string rootPath = @"C:\Users\shiya\Desktop\recordTEST2\";
          public int numberOfConcurrentTasks = 7;
-        
-        public void nsichneuExperimentsB()
+
+#region useless SUTs
+        public void binarySearchExperimentsB(string rootpath, int numOfTestCases)
         {
-            // inputs: xxx|xxxxx|000000|
-            ReadSUTBranchCEData.readBranch rbce = new ReadSUTBranchCEData.readBranch();
-            int[] inputs = new int[]
+            //binary search too simple
+            //1 test case kills all mutants
+            RealSUT bs = new RealSUT();
+            bs.sutbinarysearch();
+        }
+
+        public void quickSortExperimentB(string rootpath, int numOfTestCases)
+        {
+            //quicksort too simple
+            //1 test case kills all mutants
+            rootPath = rootpath;
+            string filePath = null;
+            string testInputsFilePath = rootpath + @"testData";
+            maxGen = 3000;
+
+            RealSUT qs = new RealSUT();
+            qs.sutquicksort();
+
+            DataTable dataTablebinsTriProb = new DataTable();
+
+            for (int u = 0; u < qs.numOfLabels; u++)
             {
-               1,2,3,1,1,1,1,1,0,0,0,0,0,0
-
-
-            };
-            List<string> outputs = new List<string>();
-
-            for (int i1 = 0; i1 < 4; i1++)
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < qs.bins.Length; u++)
             {
-                for (int i2 = 0; i2 < 4; i2++)
+                object[] rowData = null;
+                rowData = qs.bins[u].ProbInBins.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+
+            //Task.Run(() =>sssss
+            //{
+            //    filePath = rootPath + "triInBins.xlsx";
+            //    if (!File.Exists(filePath))
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
+            //    }
+            //    else
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
+            //    }
+            //});
+
+            GALS gals = new GALS(maxGen, qs.numOfLabels, qs);
+
+            record record = new record();
+            record.fitnessGen = new double[maxGen];
+            record.probLowBoundGen = new double[maxGen];
+            record.bestSolution = new solution();
+
+            gals.ExpectedTriggeringProbSetUp();
+            gals.GAInitialization();
+            gals.AlgorithmStart(record);
+
+
+            DataSet ds = SolverCLP.FinalResultsinDataTables(
+                null,
+                record.bestSolution.binSetup,
+                record.bestSolution.setProbabilities,
+                record.bestSolution.Amatrix,
+                @"InputSetMap",
+                @"Weights",
+                @"TrigProbEst",
+                @"TrigProbTrue"
+                );
+
+            // Write InputsBin Mapping to Excel
+            TestDataGeneration tdg = new TestDataGeneration(
+                testInputsFilePath,
+                null,
+                numOfTestCases,
+                record.bestSolution.setProbabilities,
+                qs
+                );
+            tdg.testDataGenerationQuickSort(rootPath, record.bestSolution.binSetup);
+
+            for (int i = 0; i < ds.Tables.Count; i++)
+            {
+                if (i == 0)
+                {   // ignore the inputSetMap table
+                    continue;
+                }
+                string excelName = ds.Tables[i].TableName + ".xlsx";
+                if (!File.Exists(rootpath + excelName))
                 {
-                    for (int i3 = 0; i3 < 4; i3++)
-                    {
-                        for (int i4 = 0; i4 < 10; i4++)
-                        {
-                            for (int i5 = 0; i5 < 10; i5++)
-                            {
-                                for (int i6 = 0; i6 < 10; i6++)
-                                {
-                                    for (int i7 = 0; i7 < 10; i7++)
-                                    {
-                                        for (int i8 = 0; i8 < 10; i8++)
-                                        {
-                                            inputs = new int[]
-                                            {
-                                                 i1,i2,i3,i4,i5,i6,i7,i8,0,0,0,0,0,0
-                                            };
-                                            int[] output = null;
-                                            rbce.ReadBranchCLIFunc(inputs, ref output, 3);
-                                            string outputStr = "";
-                                            foreach (int x in output)
-                                            {
-                                                outputStr += x.ToString();
-                                            }
-                                            outputs.Add(outputStr);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            true
+                            );
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            false
+                            );
                 }
             }
 
-            var distinctOutputs = outputs.Distinct();
+            //Write adjusted and overall fitnesses into excel
+            DataTable dataTable = new DataTable();
+            dataTable.Columns.Add("adjustedFitness", Type.GetType("System.Double"));
+            dataTable.Columns.Add("overallFitness", Type.GetType("System.Double"));
+            for (int u = 0; u < record.fitnessGen.Length; u++)
+            {
+                object[] rowData = new object[2];
+                rowData[0] = (object)record.fitnessGen[u];
+                rowData[1] = (object)record.probLowBoundGen[u];
+                var row = dataTable.NewRow();
+                row.ItemArray = rowData;
+                dataTable.Rows.Add(row);
+            }
+            filePath = rootPath + "fitnesses.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
+            }
 
+            //Write bins setup into excel
+            DataTable dataTablebinssetup = new DataTable();
+            dataTablebinssetup.Columns.Add("binssetup", Type.GetType("System.Double"));
+            for (int u = 0; u < record.bestSolution.binSetup.Length; u++)
+            {
+                object[] rowData = new object[1];
+                rowData[0] = (object)record.bestSolution.binSetup[u];
+                var row = dataTablebinssetup.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinssetup.Rows.Add(row);
+            }
+            filePath = rootPath + "binsSetup.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
+            }
+
+            // Write total running time into excel
+            DataTable totalRunningTimeTable = new DataTable();
+            totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
+            object[] runningtime = new object[] { record.bestSolution.totalRunTime };
+            var rowRunningTime = totalRunningTimeTable.NewRow();
+            rowRunningTime.ItemArray = runningtime;
+            totalRunningTimeTable.Rows.Add(rowRunningTime);
+            filePath = rootPath + "runningTime.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
+            }
+        }
+#endregion
+
+
+        public void nsichneuExperimentsB(string rootpath, int numOfTestCases)
+        {
+            rootPath = rootpath;
+            string filePath = null;
+            string testInputsFilePath = rootpath + @"testData";
+            maxGen = 3000;
+            int partCount = 1;
+            RealSUT neichneu = new RealSUT();
+            var listPartitions = neichneu.sutnsichneu(partCount);
+
+            DataTable dataTablebinsTriProb = new DataTable();
+
+            for (int u = 0; u < neichneu.numOfLabels; u++)
+            {
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < neichneu.bins.Length; u++)
+            {
+                object[] rowData = null;
+                rowData = neichneu.bins[u].ProbInBins.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+
+            //Task.Run(() =>
+            //{
+            //    filePath = rootPath + "triInBins.xlsx";
+            //    if (!File.Exists(filePath))
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
+            //    }
+            //    else
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
+            //    }
+            //});
+
+            for (int o = partCount-1; o >= 0; o--)
+            {
+                neichneu.setPartBinsToBinSutsichneu(listPartitions[o]);
+                GALS gals = new GALS(maxGen, neichneu.numOfLabels, neichneu);
+
+                record record = new record();
+                record.fitnessGen = new double[maxGen];
+                record.probLowBoundGen = new double[maxGen];
+                record.bestSolution = new solution();
+
+                gals.ExpectedTriggeringProbSetUp();
+                gals.GAInitialization();
+                gals.AlgorithmStart(record);
+
+
+                DataSet ds = SolverCLP.FinalResultsinDataTables(
+                    null,
+                    record.bestSolution.binSetup,
+                    record.bestSolution.setProbabilities,
+                    record.bestSolution.Amatrix,
+                    @"InputSetMap",
+                    @"Weights",
+                    @"TrigProbEst",
+                    @"TrigProbTrue"
+                    );
+
+                // Write InputsBin Mapping to Excel
+                TestDataGeneration tdg = new TestDataGeneration(
+                    testInputsFilePath,
+                    null,
+                    numOfTestCases / partCount,
+                    record.bestSolution.setProbabilities,
+                    neichneu
+                    );
+                tdg.testDataGenerationNichneu(rootPath,record.bestSolution.binSetup);
+
+                for (int i = 0; i < ds.Tables.Count; i++)
+                {
+                    if (i == 0)
+                    {   // ignore the inputSetMap table
+                        continue;
+                    }
+                    string excelName = ds.Tables[i].TableName + ".xlsx";
+                    if (!File.Exists(rootpath + excelName))
+                    {
+                        ExcelOperation.dataTableListToExcel(
+                                new List<DataTable>() { ds.Tables[i] },
+                                true,
+                                rootpath + excelName,
+                                true
+                                );
+                    }
+                    else
+                    {
+                        ExcelOperation.dataTableListToExcel(
+                                new List<DataTable>() { ds.Tables[i] },
+                                true,
+                                rootpath + excelName,
+                                false
+                                );
+                    }
+                }
+
+                //Write adjusted and overall fitnesses into excel
+                DataTable dataTable = new DataTable();
+                dataTable.Columns.Add("adjustedFitness", Type.GetType("System.Double"));
+                dataTable.Columns.Add("overallFitness", Type.GetType("System.Double"));
+                for (int u = 0; u < record.fitnessGen.Length; u++)
+                {
+                    object[] rowData = new object[2];
+                    rowData[0] = (object)record.fitnessGen[u];
+                    rowData[1] = (object)record.probLowBoundGen[u];
+                    var row = dataTable.NewRow();
+                    row.ItemArray = rowData;
+                    dataTable.Rows.Add(row);
+                }
+                filePath = rootPath + "fitnesses.xlsx";
+                if (!File.Exists(filePath))
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
+                }
+
+                //Write bins setup into excel
+                DataTable dataTablebinssetup = new DataTable();
+                dataTablebinssetup.Columns.Add("binssetup", Type.GetType("System.Double"));
+                for (int u = 0; u < record.bestSolution.binSetup.Length; u++)
+                {
+                    object[] rowData = new object[1];
+                    rowData[0] = (object)record.bestSolution.binSetup[u];
+                    var row = dataTablebinssetup.NewRow();
+                    row.ItemArray = rowData;
+                    dataTablebinssetup.Rows.Add(row);
+                }
+                filePath = rootPath + "binsSetup.xlsx";
+                if (!File.Exists(filePath))
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, true);
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
+                }
+
+                // Write total running time into excel
+                DataTable totalRunningTimeTable = new DataTable();
+                totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
+                object[] runningtime = new object[] { record.bestSolution.totalRunTime };
+                var rowRunningTime = totalRunningTimeTable.NewRow();
+                rowRunningTime.ItemArray = runningtime;
+                totalRunningTimeTable.Rows.Add(rowRunningTime);
+                filePath = rootPath + "runningTime.xlsx";
+                if (!File.Exists(filePath))
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, true);
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
+                }
+            }
         }
         public void BestMoveExperimentsB(string rootpath, int numOfTestCases)
         {
@@ -134,7 +418,8 @@ namespace GADEApproach
                 testInputsFilePath,
                 ds.Tables[0],
                 numOfTestCases,
-                record.bestSolution.setProbabilities
+                record.bestSolution.setProbabilities,
+                bestMove
                 );
             tdg.testDataGenerationBestMove(rootpath);
 
@@ -397,6 +682,328 @@ namespace GADEApproach
                         }
                     }
                 }
+            }
+        }
+
+        public void MatrixInverseExperimentB(string rootpath, int numOfTestCases)
+        {
+
+            rootPath = rootpath;
+            string filePath = null;
+            string testInputsFilePath = rootpath + @"testData";
+            maxGen = 3000;
+
+            RealSUT mi = new RealSUT();
+            mi.sutmatrixinverse();
+
+            DataTable dataTablebinsTriProb = new DataTable();
+
+            for (int u = 0; u < mi.numOfLabels; u++)
+            {
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < mi.bins.Length; u++)
+            {
+                object[] rowData = null;
+                rowData = mi.bins[u].ProbInBins.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+
+            //Task.Run(() =>
+            //{
+            //    filePath = rootPath + "triInBins.xlsx";
+            //    if (!File.Exists(filePath))
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
+            //    }
+            //    else
+            //    {
+            //        ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
+            //    }
+            //});
+
+            GALS gals = new GALS(maxGen, mi.numOfLabels, mi);
+
+            record record = new record();
+            record.fitnessGen = new double[maxGen];
+            record.probLowBoundGen = new double[maxGen];
+            record.bestSolution = new solution();
+
+            gals.ExpectedTriggeringProbSetUp();
+            gals.GAInitialization();
+           gals.AlgorithmStart(record);
+
+
+            DataSet ds = SolverCLP.FinalResultsinDataTables(
+                null,
+                record.bestSolution.binSetup,
+                record.bestSolution.setProbabilities,
+                record.bestSolution.Amatrix,
+                @"InputSetMap",
+                @"Weights",
+                @"TrigProbEst",
+                @"TrigProbTrue"
+                );
+
+            // Write InputsBin Mapping to Excel
+            TestDataGeneration tdg = new TestDataGeneration(
+                testInputsFilePath,
+                null,
+                numOfTestCases,
+                record.bestSolution.setProbabilities,
+                mi
+                );
+            tdg.testDataGenerationMatrixInverse(rootPath, record.bestSolution.binSetup);
+
+            for (int i = 0; i < ds.Tables.Count; i++)
+            {
+                if (i == 0)
+                {   // ignore the inputSetMap table
+                    continue;
+                }
+                string excelName = ds.Tables[i].TableName + ".xlsx";
+                if (!File.Exists(rootpath + excelName))
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            true
+                            );
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            false
+                            );
+                }
+            }
+
+            //Write adjusted and overall fitnesses into excel
+            DataTable dataTable = new DataTable();
+            dataTable.Columns.Add("adjustedFitness", Type.GetType("System.Double"));
+            dataTable.Columns.Add("overallFitness", Type.GetType("System.Double"));
+            for (int u = 0; u < record.fitnessGen.Length; u++)
+            {
+                object[] rowData = new object[2];
+                rowData[0] = (object)record.fitnessGen[u];
+                rowData[1] = (object)record.probLowBoundGen[u];
+                var row = dataTable.NewRow();
+                row.ItemArray = rowData;
+                dataTable.Rows.Add(row);
+            }
+            filePath = rootPath + "fitnesses.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
+            }
+
+            //Write bins setup into excel
+            DataTable dataTablebinssetup = new DataTable();
+            dataTablebinssetup.Columns.Add("binssetup", Type.GetType("System.Double"));
+            for (int u = 0; u < record.bestSolution.binSetup.Length; u++)
+            {
+                object[] rowData = new object[1];
+                rowData[0] = (object)record.bestSolution.binSetup[u];
+                var row = dataTablebinssetup.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinssetup.Rows.Add(row);
+            }
+            filePath = rootPath + "binsSetup.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
+            }
+
+            // Write total running time into excel
+            DataTable totalRunningTimeTable = new DataTable();
+            totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
+            object[] runningtime = new object[] { record.bestSolution.totalRunTime };
+            var rowRunningTime = totalRunningTimeTable.NewRow();
+            rowRunningTime.ItemArray = runningtime;
+            totalRunningTimeTable.Rows.Add(rowRunningTime);
+            filePath = rootPath + "runningTime.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
+            }
+        }
+
+        public void TriangleExperimentB(string rootpath, int numOfTestCases)
+        {
+
+            rootPath = rootpath;
+            string filePath = null;
+            string testInputsFilePath = rootpath + @"testData";
+            maxGen = 3000;
+
+            RealSUT tri = new RealSUT();
+            tri.sutTriangle();
+
+            DataTable dataTablebinsTriProb = new DataTable();
+
+            for (int u = 0; u < tri.numOfLabels; u++)
+            {
+                dataTablebinsTriProb.Columns.Add(u.ToString(), Type.GetType("System.Double"));
+            }
+            for (int u = 0; u < tri.bins.Length; u++)
+            {
+                object[] rowData = null;
+                rowData = tri.bins[u].ProbInBins.Select(x => (object)x).ToArray();
+                var row = dataTablebinsTriProb.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinsTriProb.Rows.Add(row);
+            }
+
+            Task.Run(() =>
+            {
+                filePath = rootPath + "triInBins.xlsx";
+                if (!File.Exists(filePath))
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, true);
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinsTriProb }, true, filePath, false);
+                }
+            });
+
+            GALS gals = new GALS(maxGen, tri.numOfLabels, tri);
+
+            record record = new record();
+            record.fitnessGen = new double[maxGen];
+            record.probLowBoundGen = new double[maxGen];
+            record.bestSolution = new solution();
+
+            gals.ExpectedTriggeringProbSetUp();
+            gals.GAInitialization();
+            gals.AlgorithmStart(record);
+
+
+            DataSet ds = SolverCLP.FinalResultsinDataTables(
+                null,
+                record.bestSolution.binSetup,
+                record.bestSolution.setProbabilities,
+                record.bestSolution.Amatrix,
+                @"InputSetMap",
+                @"Weights",
+                @"TrigProbEst",
+                @"TrigProbTrue"
+                );
+
+            // Write InputsBin Mapping to Excel
+            TestDataGeneration tdg = new TestDataGeneration(
+                testInputsFilePath,
+                null,
+                numOfTestCases,
+                record.bestSolution.setProbabilities,
+                tri
+                );
+            tdg.testDataGenerationTriangle(rootPath, record.bestSolution.binSetup);
+
+            for (int i = 0; i < ds.Tables.Count; i++)
+            {
+                if (i == 0)
+                {   // ignore the inputSetMap table
+                    continue;
+                }
+                string excelName = ds.Tables[i].TableName + ".xlsx";
+                if (!File.Exists(rootpath + excelName))
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            true
+                            );
+                }
+                else
+                {
+                    ExcelOperation.dataTableListToExcel(
+                            new List<DataTable>() { ds.Tables[i] },
+                            true,
+                            rootpath + excelName,
+                            false
+                            );
+                }
+            }
+
+            //Write adjusted and overall fitnesses into excel
+            DataTable dataTable = new DataTable();
+            dataTable.Columns.Add("adjustedFitness", Type.GetType("System.Double"));
+            dataTable.Columns.Add("overallFitness", Type.GetType("System.Double"));
+            for (int u = 0; u < record.fitnessGen.Length; u++)
+            {
+                object[] rowData = new object[2];
+                rowData[0] = (object)record.fitnessGen[u];
+                rowData[1] = (object)record.probLowBoundGen[u];
+                var row = dataTable.NewRow();
+                row.ItemArray = rowData;
+                dataTable.Rows.Add(row);
+            }
+            filePath = rootPath + "fitnesses.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTable }, true, filePath, false);
+            }
+
+            //Write bins setup into excel
+            DataTable dataTablebinssetup = new DataTable();
+            dataTablebinssetup.Columns.Add("binssetup", Type.GetType("System.Double"));
+            for (int u = 0; u < record.bestSolution.binSetup.Length; u++)
+            {
+                object[] rowData = new object[1];
+                rowData[0] = (object)record.bestSolution.binSetup[u];
+                var row = dataTablebinssetup.NewRow();
+                row.ItemArray = rowData;
+                dataTablebinssetup.Rows.Add(row);
+            }
+            filePath = rootPath + "binsSetup.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { dataTablebinssetup }, true, filePath, false);
+            }
+
+            // Write total running time into excel
+            DataTable totalRunningTimeTable = new DataTable();
+            totalRunningTimeTable.Columns.Add("Total Running Time", Type.GetType("System.Double"));
+            object[] runningtime = new object[] { record.bestSolution.totalRunTime };
+            var rowRunningTime = totalRunningTimeTable.NewRow();
+            rowRunningTime.ItemArray = runningtime;
+            totalRunningTimeTable.Rows.Add(rowRunningTime);
+            filePath = rootPath + "runningTime.xlsx";
+            if (!File.Exists(filePath))
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, true);
+            }
+            else
+            {
+                ExcelOperation.dataTableListToExcel(new List<DataTable>() { totalRunningTimeTable }, true, filePath, false);
             }
         }
     }

@@ -16,7 +16,8 @@ namespace GADEApproach
         public double[] highbounds = null;
         public int numOfMinIntervalX = -1;   //This is only for bestMove
         public int numOfMinIntervalY = -1;   //This is only for bestMove
-        public int numOfMinIntervalInAllDim;
+        public int numOfMinIntervalInAllDim = 0;
+        public int totalNumberOfBins = -1;
         public Pair<int, int, double[]>[] bins; //index, setIndex, triggering probabilities
 
         public Tuple<int, int> Calxyindex(int binIndex)

@@ -15,12 +15,17 @@ namespace GADEApproach
         {
 
         }
-        public static double MinTrigProbCal(Matrix<double> Amatrix, out double[] wArray)
+        public static double MinTrigProbCal(Matrix<double> Amatrix, out double[] wArray, double[] expTrib)
         {
-            numOfVariables = Amatrix.ColumnCount;
+            double delta = 0.03;
+
+            //expTrib[0] = 0.2;
+            //expTrib[1] = 0.7;
+            //expTrib[2] = 0.3;
+            numOfVariables =  Amatrix.RowCount;
             double[] sAndW = new double[Amatrix.RowCount + Amatrix.ColumnCount];
             Matrix<double> c = Matrix<double>.Build.Dense(
-                Amatrix.RowCount * 2 + Amatrix.ColumnCount + 1, 
+                Amatrix.RowCount * 2 + Amatrix.ColumnCount + 1,
                 Amatrix.RowCount + Amatrix.ColumnCount + 1
             );
             int[] ct = new int[c.RowCount];
@@ -46,19 +51,20 @@ namespace GADEApproach
             // w1 + w2 + ... = wm
             // all si > 0, all wi > 0
 
-            double theta = 0.8; //1.0 / Amatrix.RowCount;
             penaltyFactors = Vector<double>.Build.Dense(Amatrix.RowCount, 1);
             for (int i = 0; i < penaltyFactors.Count(); i++)
             {
-                if (maxTriProbs[i] < theta)
+                if (maxTriProbs[i] < delta)
                 {
-                    penaltyFactors[i] = penaltyFactors[i] * (theta - maxTriProbs[i]) * 100;
+                    penaltyFactors[i] += penaltyFactors[i] * (delta - maxTriProbs[i]) * (2/ delta);
                 }
             }
-
-            for (int i = 0; i < Amatrix.ColumnCount+1; i++)
+            //penaltyFactors[0] = 1;
+            //penaltyFactors[1] = 1;
+            //penaltyFactors[2] = 1;
+            for (int i = 0; i < Amatrix.ColumnCount + 1; i++)
             {
-                c[ct.Length - 1, i+Amatrix.RowCount] = 1;
+                c[ct.Length - 1, i + Amatrix.RowCount] = 1;
             }
             for (int row = 0; row < Amatrix.RowCount; row++)
             {
@@ -67,8 +73,8 @@ namespace GADEApproach
                 {
                     c[row, col + Amatrix.RowCount] = Amatrix.Row(row)[col];
                 }
-                c[row, Amatrix.ColumnCount + Amatrix.RowCount] = maxTriProbs[row];
-                ct[row] = 0;
+                c[row, Amatrix.ColumnCount + Amatrix.RowCount] = expTrib[row];
+                ct[row] = 1;
             }
 
             for (int row = 0; row < Amatrix.RowCount + Amatrix.ColumnCount; row++)
@@ -89,21 +95,13 @@ namespace GADEApproach
             alglib.minbleicsetcond(state, epsg, epsf, epsx, maxits);
             alglib.minbleicoptimize(state, linearFunction_grad, null, null);
             alglib.minbleicresults(state, out sAndW, out rep);
-
-            var sVector = Vector<double>.Build.Dense(sAndW.Take(Amatrix.RowCount).ToArray());
-            var trigProbs = Vector<double>.Build.Dense(maxTriProbs) - sVector;
             wArray = new double[Amatrix.ColumnCount];
             Array.Copy(sAndW, Amatrix.RowCount, wArray, 0, Amatrix.ColumnCount);
+            var trigProbs = Amatrix.Multiply(Vector<double>.Build.Dense(wArray)).ToArray();
             double fitness = trigProbs.Min();
-            //var e = Amatrix.Column(9);
-            //if (wArray.Where(x => Math.Round(x, 3) > 0).Count() > 1)
-            //{
-            //    int ttt = 0;
-            //}
-            //var ttt2 = Amatrix.Column(1);
-            //var ValidatetrigProbs = Amatrix * Vector<double>.Build.Dense(wArray).ToColumnMatrix();
-            //double ValidateSumEqualToOne = wArray.Sum();
+            var tt = Amatrix.Column(1);
             return fitness;
+
         }
         public static void linearFunction_grad(double[] x, ref double func, double[] grad, object obj)
         {

@@ -51,7 +51,7 @@ namespace GADEApproach.TrainditionalApproaches
             }
 
             var weightMatrices = records.Select(x => x.bestSolution.WeightMateix).ToList();
-            new TestDataGeneration2(testInputsFilePath,null, numOfTestCases,null)
+            new TestDataGeneration2(testInputsFilePath,null, numOfTestCases,null,null)
                 .testDataGenerationBestMove2(weightMatrices, bestMove,rootPath);
             //Write set probabilities into excel
             DataTable SetProbdataTable = new DataTable();

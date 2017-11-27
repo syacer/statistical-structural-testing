@@ -135,11 +135,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BestMoveSUT.h" />
+    <ClInclude Include="bs.h" />
     <ClInclude Include="CalDaySUT.h" />
     <ClInclude Include="GcdSUT.h" />
+    <ClInclude Include="im.h" />
     <ClInclude Include="nsichneu.h" />
+    <ClInclude Include="qsortsut.h" />
     <ClInclude Include="ReadSUTBranchCEData.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="select.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="TriangleSUT.h" />
     <ClInclude Include="UnManagedCode.h" />
@@ -147,10 +151,14 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="BestMoveSUT.cpp" />
+    <ClCompile Include="bs.cpp" />
     <ClCompile Include="CalDaySUT.cpp" />
     <ClCompile Include="GcdSUT.cpp" />
+    <ClCompile Include="im.cpp" />
     <ClCompile Include="nsichneu.cpp" />
+    <ClCompile Include="qsortsut.cpp" />
     <ClCompile Include="ReadSUTBranchCEData.cpp" />
+    <ClCompile Include="select.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -158,7 +166,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TriangleSUT.cpp" />
-    <ClCompile Include="UnManagedCode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

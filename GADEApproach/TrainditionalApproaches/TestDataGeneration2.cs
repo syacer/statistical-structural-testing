@@ -11,7 +11,7 @@ namespace GADEApproach.TrainditionalApproaches
 {
     public class TestDataGeneration2:TestDataGeneration
     {
-        public TestDataGeneration2(string testdataFilePath, DataTable inputSetMapDt, int testSize, double[] SetProbAry) : base(testdataFilePath, inputSetMapDt, testSize, SetProbAry)
+        public TestDataGeneration2(string testdataFilePath, DataTable inputSetMapDt, int testSize, double[] SetProbAry, SUT sut) : base(testdataFilePath, inputSetMapDt, testSize, SetProbAry,sut)
         {
         }
 

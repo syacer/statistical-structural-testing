@@ -34,8 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ReadSUTBranchCEData, Version=1.0.6491.28569, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="ReadSUTBranchCEData">
       <HintPath>..\x64\Debug\ReadSUTBranchCEData.dll</HintPath>
     </Reference>
     <Reference Include="System" />

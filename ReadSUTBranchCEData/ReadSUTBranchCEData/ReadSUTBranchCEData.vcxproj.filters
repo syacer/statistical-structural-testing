@@ -42,6 +42,18 @@
     <ClInclude Include="nsichneu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="bs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="select.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qsortsut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="im.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ReadSUTBranchCEData.cpp">
@@ -51,9 +63,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UnManagedCode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TriangleSUT.cpp">
@@ -69,6 +78,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="nsichneu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="select.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qsortsut.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="im.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

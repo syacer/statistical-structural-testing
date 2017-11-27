@@ -137,12 +137,14 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GALS.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="GlobalVar.cs" />
     <Compile Include="GoalProgramming.cs" />
     <Compile Include="LocalFileAccess.cs" />
     <Compile Include="ObjectiveFunctions.cs" />
     <Compile Include="PathCounts.cs" />
     <Compile Include="ProcessingExcels.cs" />
+    <Compile Include="ProcessMutationScore.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QP.cs" />

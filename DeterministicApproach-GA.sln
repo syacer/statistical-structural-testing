@@ -13,6 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatisticalApproach", "Stat
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SUTPathCounter", "SUTPathCounter\SUTPathCounter.csproj", "{21149230-688E-4997-A055-F72714984483}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E506B3CA-520D-4C6B-9A1A-65786C05C208} = {E506B3CA-520D-4C6B-9A1A-65786C05C208}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ReadSUTBranchCEData", "ReadSUTBranchCEData\ReadSUTBranchCEData\ReadSUTBranchCEData.vcxproj", "{E506B3CA-520D-4C6B-9A1A-65786C05C208}"
 EndProject

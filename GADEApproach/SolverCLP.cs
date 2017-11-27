@@ -23,7 +23,9 @@ namespace GADEApproach
         static string excelTrigProbsEst = rootpath + @"TrigProbEst";
         static string excelTrigProbTrue = rootpath + @"TrigProbTrue.xlsx";
 
+#pragma warning disable CS0414 // The field 'SolverCLP.numOfLabels' is assigned but its value is never used
         static int numOfLabels = 42;
+#pragma warning restore CS0414 // The field 'SolverCLP.numOfLabels' is assigned but its value is never used
 
         public static Tuple<double[], double> solver2(Matrix<double> AMatrix, double[] expTribProbAry)
         {
@@ -174,45 +176,55 @@ namespace GADEApproach
             DataTable dt = null;
             if (inputsBinDt == null)
             {
-                dt = ExcelOperation.ReadExcelFile(tablePath).Tables[1];
+                try
+                {
+                    dt = ExcelOperation.ReadExcelFile(tablePath).Tables[1];
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
             else
             {
                 dt = inputsBinDt;
             }
-            for (int i = 0; i < dt.Rows.Count; i++)
+            if (dt != null)
             {
-                List<int> dataRowInputSet = new List<int>();
-                object[] rowData = dt.Rows[i].ItemArray;
-                if (i == 0)
+                for (int i = 0; i < dt.Rows.Count; i++)
                 {
+                    List<int> dataRowInputSet = new List<int>();
+                    object[] rowData = dt.Rows[i].ItemArray;
+                    if (i == 0)
+                    {
+                        for (int j = 0; j < rowData.Length; j++)
+                        {
+                            ds.Tables[InputSetMap].Columns.Add(j.ToString(), Type.GetType("System.Int32"));
+                        }
+                    }
                     for (int j = 0; j < rowData.Length; j++)
                     {
-                        ds.Tables[InputSetMap].Columns.Add(j.ToString(), Type.GetType("System.Int32"));
+                        if (Convert.ToInt32(rowData[j]) != -9999999)
+                        {
+                            dataRowInputSet.Add(Convert.ToInt32(rowData[j]));
+                        }
+                        else
+                        {
+                            dataRowInputSet.Add(Convert.ToInt32(rowData[j + 1]));
+                            break;
+                        }
                     }
+                    int binIndex = dataRowInputSet[dataRowInputSet.Count - 1];
+                    int setIndex = newBinsSetup[binIndex - 1];
+                    dataRowInputSet[dataRowInputSet.Count - 1] = -9999999;
+                    dataRowInputSet.Add(setIndex);
+                    int[] dataRowInputSetAry = dataRowInputSet.ToArray();
+                    var newRow = ds.Tables[InputSetMap].NewRow();
+                    newRow.ItemArray = dataRowInputSetAry.Select(x => (object)x).ToArray();
+                    ds.Tables[InputSetMap].Rows.Add(newRow);
                 }
-                for (int j = 0; j < rowData.Length; j++)
-                {
-                    if (Convert.ToInt32(rowData[j]) != -9999999)
-                    {
-                        dataRowInputSet.Add(Convert.ToInt32(rowData[j]));
-                    }
-                    else
-                    {
-                        dataRowInputSet.Add(Convert.ToInt32(rowData[j+1]));
-                        break;
-                    }
-                }
-                int binIndex = dataRowInputSet[dataRowInputSet.Count - 1];
-                int setIndex = newBinsSetup[binIndex-1];
-                dataRowInputSet[dataRowInputSet.Count - 1] = -9999999;
-                dataRowInputSet.Add(setIndex);
-                int[] dataRowInputSetAry = dataRowInputSet.ToArray();
-                var newRow = ds.Tables[InputSetMap].NewRow();
-                newRow.ItemArray = dataRowInputSetAry.Select(x => (object)x).ToArray();
-                ds.Tables[InputSetMap].Rows.Add(newRow);
             }
-
+            
             // Add Weightd to DataTable
             ds.Tables.Add(Weights);
             ds.Tables[Weights].Columns.Add("weight", Type.GetType("System.Double"));

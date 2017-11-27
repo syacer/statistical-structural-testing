@@ -56,25 +56,25 @@ namespace sutnamespace
 	}
 	nsichneuSUT::~nsichneuSUT()
 	{
-		printf("\nP1_marking_member_0: \n");
-		//for (int j = 0; j < sizeof(P1_marking_member_0); j++)
-		//{
-		//	printf("%d ",P1_marking_member_0[j]);
-		//}
+		//printf("\nP1_marking_member_0: \n");
+		////for (int j = 0; j < sizeof(P1_marking_member_0); j++)
+		////{
+		////	printf("%d ",P1_marking_member_0[j]);
+		////}
 
-		delete[] P1_marking_member_0;
-		printf("\nP2_marking_member_1: \n");
-		//for (int j = 0; j < sizeof(P2_marking_member_0); j++)
-		//{
-		//	printf("%d ", P2_marking_member_0[j]);
-		//}
+		//delete[] P1_marking_member_0;
 		//printf("\nP2_marking_member_1: \n");
-		delete[] P2_marking_member_0;
-		for (int j = 0; j < sizeof(P3_marking_member_0); j++)
-		{
-			printf("%d ", P3_marking_member_0[j]);
-		}
-		delete[] P3_marking_member_0;
+		////for (int j = 0; j < sizeof(P2_marking_member_0); j++)
+		////{
+		////	printf("%d ", P2_marking_member_0[j]);
+		////}
+		////printf("\nP2_marking_member_1: \n");
+		//delete[] P2_marking_member_0;
+		//for (int j = 0; j < sizeof(P3_marking_member_0); j++)
+		//{
+		//	printf("%d ", P3_marking_member_0[j]);
+		//}
+		//delete[] P3_marking_member_0;
 	}
 
 	int nsichneuSUT::Nsichneu(int in1, int in2, int in3,

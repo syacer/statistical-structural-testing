@@ -52,7 +52,9 @@ namespace GADEApproach
         int generation = 0;
         double[] expTriProb;
         //Multi-Threading Setup
+#pragma warning disable CS0414 // The field 'GALS.numberOfConcurrentTasks' is assigned but its value is never used
         int numberOfConcurrentTasks = 20;
+#pragma warning restore CS0414 // The field 'GALS.numberOfConcurrentTasks' is assigned but its value is never used
         int numOfLabels = -1;
         //GA Setup
         public int maxGen = 5000;
@@ -66,7 +68,9 @@ namespace GADEApproach
 
         //SUT Setup
         SUT sut = null;
+#pragma warning disable CS0414 // The field 'GALS.minGoodnessOfFit' is assigned but its value is never used
         double minGoodnessOfFit = 9999999;
+#pragma warning restore CS0414 // The field 'GALS.minGoodnessOfFit' is assigned but its value is never used
 
         public GALS(int numOfMaxGen, int numLabels, SUT SUT)
         {
@@ -86,7 +90,6 @@ namespace GADEApproach
         public void AlgorithmStart(record record)
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
-
             int[] token = new int[1];
             FitnessEvaluationNoParll(token);
            // MOGA_NormalizeFitness();
@@ -121,7 +124,7 @@ namespace GADEApproach
                 record.probLowBoundGen[generation] = bestSolution.Variance;
                 watch.Start();
 
-                if (lastNumOffitness.Count == 100)
+                if (lastNumOffitness.Count >=  30)
                 {
                     lastNumOffitness.Dequeue();
                     lastNumOffitness.Enqueue(bestSolution.ProbLowBound);
@@ -132,7 +135,7 @@ namespace GADEApproach
                 }
                 else
                 {
-                    lastNumOffitness.Enqueue(1.0 / bestSolution.ProbLowBound);
+                    lastNumOffitness.Enqueue(bestSolution.ProbLowBound);
                 }
 
                 generation += 1;
@@ -175,6 +178,10 @@ namespace GADEApproach
                 {
                     pool[i].binsSetup[j].SetIndexPlus1 = GlobalVar.rnd.Next(1,numOfLabels+1);
                 }
+            }
+            if (pool.Where(x => x.binsSetup.Any(y => y.SetIndexPlus1 == 0)).Count() > 0)
+            {
+                int ccccc = 0;
             }
         }
         private void SolutionRepair(Pair<int, int, double[]>[] bins)
@@ -250,15 +257,21 @@ namespace GADEApproach
             for (int k = 0; k < populationSize; k++)
             {
                 //Console.Write("task #{0}", id);
-                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels,numOfLabels);
+                Matrix<double> Amatrix = Matrix<double>.Build.Dense(numOfLabels, numOfLabels);
                 int[] binsInSets = null;
                 double[][] binsSetup = null;
                 int[] newBinsInSet = null;
                 double[] weightArray = new double[numOfLabels];
-
                 WraperForCreateAMatrix(pool[k].binsSetup, out binsInSets, out binsSetup);
-                ConvertInvertibleAMatrix.CreateInvertibleAMatrix(ref Amatrix,binsInSets,binsSetup,out newBinsInSet,numOfLabels);
-
+                ConvertInvertibleAMatrix.CreateInvertibleAMatrix(ref Amatrix, binsInSets, binsSetup, out newBinsInSet, numOfLabels);
+                for (int i = 0; i < pool[k].binsSetup.Length; i++)
+                {
+                    pool[k].binsSetup[i].SetIndexPlus1 = newBinsInSet[i];
+                }
+                if (pool[k].binsSetup.Any(y => y.SetIndexPlus1 == 0)== true)
+                {
+                    int ccccc = 0;
+                }
                 //Matrix<double> tempAmatrix = Matrix<double>.Build.Dense(3,3);
                 //tempAmatrix[0, 0] = 0.8;
                 //tempAmatrix[0, 1] = 0.5;
@@ -269,8 +282,13 @@ namespace GADEApproach
                 //tempAmatrix[2, 0] = 0.7;
                 //tempAmatrix[2, 1] = 0.1;
                 //tempAmatrix[2, 2] = 0.8;
-                double probLowBound = GoalProgramming.MinTrigProbCal(Amatrix, out weightArray);
-         
+                if (k == 0)
+                {
+                    int aaaa = 0;
+                }
+                //Console.WriteLine(Amatrix.ToMatrixString());
+                double probLowBound = GoalProgramming.MinTrigProbCal(Amatrix, out weightArray,expTriProb);
+                var t = Amatrix.Column(2);
                 pool[k].ProbLowBound = probLowBound;
                 pool[k].Variance = 0;
                 pool[k].AMatrix = Amatrix;
@@ -366,7 +384,9 @@ namespace GADEApproach
             }
         }
         //int testBestSolutionIndex;
+#pragma warning disable CS0414 // The field 'GALS.testBestSolution' is assigned but its value is never used
         Pair<int, double, Pair<int, int, double[]>[], Matrix<double>, double, double> testBestSolution = null;
+#pragma warning restore CS0414 // The field 'GALS.testBestSolution' is assigned but its value is never used
          void Reproduction()
         {
             //For MOGA- NO ELITISM applied
@@ -376,6 +396,7 @@ namespace GADEApproach
             int startIndex = 0;
 #if MOGA == false
             var rankOneSolutions = pool.Where(x=>x.ProbLowBound == pool.Max(y=>y.ProbLowBound)).ToArray()[0];
+            Console.WriteLine(rankOneSolutions.Index);
             tempPool[0] = Copy.DeepCopy(rankOneSolutions);
             tempPool[0].Index = 0;
             startIndex = 1;
@@ -398,13 +419,25 @@ namespace GADEApproach
             {
                 int[] selectedList = FitnessPropotionateSampling();
                 var child = Copy.DeepCopy(pool[selectedList[0]]);
+                if (child.binsSetup.Where(x => x.SetIndexPlus1 == 0).Count() > 0)
+                {
+                    int o = 1;
+                }
                 if (GlobalVar.rnd.NextDouble() <= crRate)
                 {
                     child.binsSetup = TwoPointCrossOver(pool[selectedList[0]].binsSetup, pool[selectedList[1]].binsSetup);
+                    if (child.binsSetup.Where(x => x.SetIndexPlus1 == 0).Count() > 0)
+                    {
+                        int o = 1;
+                    }
                 }
                 if (GlobalVar.rnd.NextDouble() <= mtRate)
                 {
                     Mutation(child.binsSetup);
+                    if (child.binsSetup.Where(x => x.SetIndexPlus1 == 0).Count() > 0)
+                    {
+                        int o = 1;
+                    }
                 }
                 child.Index = i;
                 tempPool[i] = child;
@@ -417,7 +450,7 @@ namespace GADEApproach
             expTriProb = new double[numOfLabels];
             for (int i = 0; i < numOfLabels; i++)
             {
-                expTriProb[i] = 1.0 / numOfLabels;
+                expTriProb[i] = 0.2;
             }
         }
         private int[] FitnessPropotionateSampling()
